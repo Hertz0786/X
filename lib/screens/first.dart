@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'login.dart'; // Import màn hình LoginScreen
+import 'login.dart';  // Import màn hình LoginScreen
+import 'create_account_screen.dart'; // Import màn hình tạo tài khoản
 
 class FirstScreen extends StatelessWidget {
   const FirstScreen({Key? key}) : super(key: key);
@@ -36,7 +37,11 @@ class FirstScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  // Hành động tiếp tục với Google
+                  print("Tiếp tục với Google");
+                  // Bạn có thể thay thế hành động này bằng logic đăng nhập Google
+                },
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -56,7 +61,11 @@ class FirstScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  // Hành động tiếp tục với Apple
+                  print("Tiếp tục với Apple");
+                  // Bạn có thể thay thế hành động này bằng logic đăng nhập Apple
+                },
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -100,26 +109,6 @@ class FirstScreen extends StatelessWidget {
                     style: TextStyle(color: Colors.black)),
               ),
               const SizedBox(height: 20),
-              const Text.rich(
-                TextSpan(
-                  text: 'Bằng cách đăng ký, bạn đồng ý với ',
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                  children: [
-                    TextSpan(
-                      text: 'Điều khoản, Chính sách riêng tư',
-                      style: TextStyle(color: Colors.blue),
-                    ),
-                    TextSpan(text: ' và '),
-                    TextSpan(
-                      text: 'Sử dụng cookie',
-                      style: TextStyle(color: Colors.blue),
-                    ),
-                    TextSpan(text: ' của chúng tôi.'),
-                  ],
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -127,7 +116,15 @@ class FirstScreen extends StatelessWidget {
                       style: TextStyle(color: Colors.grey)),
                   const SizedBox(width: 5),
                   GestureDetector(
-                    onTap: () {}, // Có thể điều hướng đến trang đăng ký nếu cần
+                    onTap: () {
+                      // Chuyển sang màn hình tạo tài khoản
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CreateAccountScreen(),
+                        ),
+                      );
+                    },
                     child: const Text('Tạo tài khoản',
                         style: TextStyle(color: Colors.blue)),
                   ),
