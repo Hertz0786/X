@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'profile_screen.dart'; // Import màn hình hồ sơ
 
 class XUI extends StatelessWidget {
   const XUI({super.key});
@@ -10,12 +11,21 @@ class XUI extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        leading: const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.purple,
-            child: Text("H", style: TextStyle(color: Colors.white)),
+        leading: GestureDetector(
+          onTap: () {
+            // Mở màn hình hồ sơ khi ấn vào avatar
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
+          },
+          child: const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.purple,
+              child: Text("H", style: TextStyle(color: Colors.white)),
+            ),
           ),
         ),
         centerTitle: true,

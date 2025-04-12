@@ -3,6 +3,7 @@ import 'x_ui.dart';
 import 'notification_screen.dart';
 import 'message_screen.dart';
 import 'compose_post_screen.dart';
+import 'saearch_screen.dart';  // Import màn hình SearchScreen
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -16,14 +17,24 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   final List<Widget> _screens = const [
     XUI(),
-    Placeholder(color: Colors.grey), // Search tab placeholder
-    NotificationScreen(),             // ✅ Notification ở tab thứ 3
+    SearchScreen(),  // Đưa SearchScreen vào tab thứ 2
+    NotificationScreen(),
     MessageScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ComposePostScreen()),
+          );
+        },
+        backgroundColor: Colors.blue,
+        child: const Icon(Icons.add),
+      ),
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
@@ -42,7 +53,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: ""),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: ""), // ✅ Tab thứ 3
+          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: ""),
           BottomNavigationBarItem(icon: Icon(Icons.mail_outline), label: ""),
         ],
       ),

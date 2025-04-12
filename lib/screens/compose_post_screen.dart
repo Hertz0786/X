@@ -13,8 +13,9 @@ class _ComposePostScreenState extends State<ComposePostScreen> {
   void _submitPost() {
     final content = _controller.text.trim();
     if (content.isNotEmpty) {
-      // Trả về bài viết mới từ màn hình compose
-      Navigator.pop(context, content);
+      // TODO: Bạn có thể gửi nội dung này lên server hoặc thêm vào danh sách bài viết
+      print('Đã đăng bài: $content');
+      Navigator.pop(context); // Quay lại sau khi đăng
     }
   }
 

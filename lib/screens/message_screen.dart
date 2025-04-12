@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:kotlin/screens/compose_message_screnn.dart';
+import 'compose_post_screen.dart'; // Import màn hình soạn tin nhắn
 
 class MessageScreen extends StatelessWidget {
   const MessageScreen({super.key});
@@ -41,7 +43,13 @@ class MessageScreen extends StatelessWidget {
             ),
             const SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                // Mở màn hình soạn tin nhắn mới
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ComposeMessageScreen()),
+                );
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
