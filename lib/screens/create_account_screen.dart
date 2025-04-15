@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:kotlin/api/client/api_client.dart';
+import 'package:kotlin/api/dto/sign_up.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
@@ -8,29 +10,48 @@ class CreateAccountScreen extends StatefulWidget {
 }
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
-  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _fullnameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _birthdateController = TextEditingController();
-
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  ApiClient apiClient = ApiClient();
   // Tạo tài khoản khi nhấn nút "Tiếp theo"
-  void _createAccount() {
-    final name = _nameController.text.trim();
-    final email = _emailController.text.trim();
-    final birthdate = _birthdateController.text.trim();
+  Future<void> _createAccount() async {
+  final fullname = _fullnameController.text.trim();
+  final email = _emailController.text.trim();
+  final username = _usernameController.text.trim();
+  final password = _passwordController.text.trim();
 
-    if (name.isEmpty || email.isEmpty || birthdate.isEmpty) {
-      // Nếu có trường nào đó bỏ trống, hiển thị thông báo lỗi
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Vui lòng điền đầy đủ thông tin")),
-      );
-    } else {
-      // Nếu thông tin hợp lệ, tiếp tục sang màn hình tiếp theo (ví dụ: chuyển sang MainScreen)
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MainScreen()), // Chuyển sang màn hình chính
-      );
-    }
+  if ([fullname, email, username, password].any((field) => field.isEmpty)) {
+    _showError("Vui lòng điền đầy đủ thông tin" , context);
+    return;
   }
+
+  final signupData = SignUpObject(
+    username: username,
+    fullname: fullname,
+    password: password,
+    email: email,
+  );
+
+  try {
+    final res = await apiClient.post<SignUpObject>(
+      "/api/auth/signup",
+      fromJson: SignUpObject.fromJson,
+      body: signupData.toJson(),
+    );
+
+    if (res != null) {
+      debugPrint("Đăng ký thành công: ${res.email}");
+      _goToMainScreen(context);
+    } else {
+      _showError("Đăng ký thất bại, vui lòng thử lại." ,context);
+    }
+  } catch (e) {
+    _showError("Lỗi kết nối đến server: $e",context);
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +66,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           },
         ),
         centerTitle: true,
-        title: const Text("Tạo tài khoản của bạn", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Tạo tài khoản của bạn",
+          style: TextStyle(color: Colors.white),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -56,7 +80,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             const Text("Tên:", style: TextStyle(color: Colors.white)),
             const SizedBox(height: 8),
             TextField(
-              controller: _nameController,
+              controller: _fullnameController,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 hintText: "Nhập tên của bạn",
@@ -91,13 +115,29 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             const SizedBox(height: 20),
 
             // Ngày sinh
-            const Text("Ngày sinh:", style: TextStyle(color: Colors.white)),
+            const Text("Tên tài khoản:", style: TextStyle(color: Colors.white)),
             const SizedBox(height: 8),
             TextField(
-              controller: _birthdateController,
+              controller: _usernameController,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
-                hintText: "Nhập ngày sinh của bạn",
+                hintText: "Nhập tên tài khoản của bạn",
+                hintStyle: TextStyle(color: Colors.grey),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+              ),
+            ),
+            const Text("Mật khẩu:", style: TextStyle(color: Colors.white)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _passwordController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                hintText: "Nhập mật khẩu của bạn",
                 hintStyle: TextStyle(color: Colors.grey),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white),
@@ -135,12 +175,20 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Main Screen'),
-      ),
-      body: const Center(
-        child: Text('Chào mừng bạn đến với ứng dụng!'),
-      ),
+      appBar: AppBar(title: const Text('Main Screen')),
+      body: const Center(child: Text('Chào mừng bạn đến với ứng dụng!')),
     );
   }
+}
+void _showError(String message , BuildContext context) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(message)),
+  );
+}
+
+void _goToMainScreen(BuildContext context) {
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => const MainScreen()),
+  );
 }
