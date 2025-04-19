@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:kotlin/screens_event/main_navigation.dart';
 import 'forgot_password.dart'; // Import màn hình Quên mật khẩu
-import 'main_navigation.dart'; // Màn hình chính sau khi đăng nhập thành công
+import 'package:kotlin/api/dto/auth/login_oj.dart';
+import 'package:kotlin/api/client/auth/auth_login_api.dart';
+import 'package:kotlin/api/client/token_storage.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -12,28 +15,60 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final AuthApi _authApi = AuthApi(); // Khởi tạo AuthApi
 
-  // Tài khoản ảo
-  final String _fakeEmail = "a";
-  final String _fakePassword = "a";
-
-  // Kiểm tra thông tin đăng nhập
-  void _login() {
+  // Hàm đăng nhập sử dụng LoginObject
+  void _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    // Kiểm tra nếu thông tin đăng nhập chính xác
-    if (email == _fakeEmail && password == _fakePassword) {
-      // Nếu đúng, chuyển sang màn hình chính
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
-      );
-    } else {
-      // Nếu sai, hiển thị thông báo lỗi
+    if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Sai email hoặc mật khẩu")),
+        const SnackBar(content: Text("Vui lòng nhập email và mật khẩu")),
       );
+      return;
+    }
+
+    // Tạo đối tượng LoginObject
+    final loginObject = LoginObject(username: email, password: password);
+
+    try {
+      final response = await _authApi.login(loginObject); // Gọi login API với LoginObject
+
+      if (response != null && response['token'] != null) {
+        final token = response['token'];
+
+        // Lưu token vào SharedPreferences thông qua TokenStorage
+        await TokenStorage.saveToken(token);
+
+        // Kiểm tra lại token đã được lưu
+        await checkToken(); // Gọi hàm checkToken để kiểm tra token
+
+        // Sau khi đăng nhập thành công, bạn có thể chuyển hướng đến màn hình chính
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Sai email hoặc mật khẩu")),
+        );
+      }
+    } catch (e) {
+      // Hiển thị lỗi nếu đăng nhập thất bại
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Đã xảy ra lỗi khi đăng nhập")),
+      );
+    }
+  }
+
+  // Kiểm tra token đã lưu
+  Future<void> checkToken() async {
+    String? token = await TokenStorage.getToken();
+    if (token != null) {
+      print('Token đã được lưu: $token');
+    } else {
+      print('Token chưa được lưu');
     }
   }
 
@@ -102,7 +137,9 @@ class _LoginScreenState extends State<LoginScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ForgotPasswordScreen(),
+                  ),
                 );
               },
               child: const Text(

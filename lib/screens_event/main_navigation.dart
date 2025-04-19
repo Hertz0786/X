@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'x_ui.dart';
-import 'notification_screen.dart';
-import 'message_screen.dart';
-import 'compose_post_screen.dart';
-import 'saearch_screen.dart'; // Import màn hình tìm kiếm
-import 'first.dart';  // Import màn hình đăng nhập để quay lại khi đăng xuất
+import 'notification/notification_screen.dart';
+import 'message/message_screen.dart';
+import 'post/compose_post_screen.dart';
+import 'search/saearch_screen.dart'; // Import màn hình tìm kiếm
+import 'login_page/first.dart';  // Import màn hình đăng nhập để quay lại khi đăng xuất
+//import 'package:shared_preferences/shared_preferences.dart';  // Import SharedPreferences để lấy token
+import 'package:kotlin/api/client/token_storage.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -31,11 +33,47 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   // Hàm đăng xuất, chuyển về màn hình đăng nhập
-  void _logout() {
+  void _logout() async {
+    // Xóa token khi đăng xuất
+    await TokenStorage.removeToken();
+
+    // Kiểm tra token đã được xóa chưa
+    await checkToken(); // Gọi hàm kiểm tra token sau khi xóa
+
+    // Chuyển về màn hình đăng nhập
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const FirstScreen()),
     );
+  }
+
+  // Hàm kiểm tra token đã bị xóa
+  Future<void> checkToken() async {
+    // Lấy token từ SharedPreferences
+    String? token = await TokenStorage.getToken();
+
+    // Kiểm tra token đã bị xóa chưa
+    if (token == null) {
+      print("Token đã bị xóa khỏi SharedPreferences.");
+    } else {
+      print("Token vẫn còn trong SharedPreferences: $token");
+    }
+  }
+
+  // Hàm lấy token từ SharedPreferences
+  Future<String?> _getToken() async {
+    return await TokenStorage.getToken();  // Sử dụng TokenStorage để lấy token
+  }
+
+  // Hàm điều hướng sau khi lấy token
+  void _navigateToComposePostScreen(String token) {
+    // Đảm bảo sử dụng context trước khi gọi async
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ComposePostScreen(token: token)),
+      );
+    }
   }
 
   @override
@@ -52,11 +90,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ComposePostScreen()),
-          );
+        onPressed: () async {
+          // Lấy token trước khi thực hiện điều hướng
+          String? token = await _getToken();
+
+          // Điều hướng ngay sau khi lấy token
+          if (token != null) {
+            // Chuyển đến ComposePostScreen nếu token có sẵn
+            _navigateToComposePostScreen(token);
+          } else {
+            // Token không tồn tại, có thể thông báo lỗi hoặc chuyển đến màn hình đăng nhập
+            _logout();
+          }
         },
         backgroundColor: Colors.blue,
         child: const Icon(Icons.add),
@@ -83,10 +128,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: "Tìm kiếm",  // Nút tìm kiếm nằm trong đây
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: ""),
           BottomNavigationBarItem(icon: Icon(Icons.notifications), label: ""),
           BottomNavigationBarItem(icon: Icon(Icons.mail_outline), label: ""),
         ],

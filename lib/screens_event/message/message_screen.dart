@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:kotlin/screens/compose_message_screnn.dart';
-import 'compose_post_screen.dart'; // Import màn hình soạn tin nhắn
+import 'package:kotlin/screens_event/compose_message_screnn.dart';
+import '../post/compose_post_screen.dart'; // Import màn hình soạn tin nhắn
 
 class MessageScreen extends StatelessWidget {
   const MessageScreen({super.key});

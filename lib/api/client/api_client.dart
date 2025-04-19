@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 typedef FromJson<T> = T Function(Map<String, dynamic> json);
 
 class ApiClient {
-  final String baseUrl = "http://localhost:8000";
+  final String baseUrl = "http://10.0.2.2:5000";  // Cập nhật URL API
 
   ApiClient();
 
@@ -24,13 +24,19 @@ class ApiClient {
   }
 
   Future<T> post<T>(
-    String path, {
-    required dynamic body,
-    required FromJson<T> fromJson,
-  }) async {
+      String path, {
+        required dynamic body,
+        required FromJson<T> fromJson,
+        String? token, // <-- Cho phép token null
+      }) async {
+    final headers = {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token', // Thêm nếu có token
+    };
+
     final response = await http.post(
       Uri.parse('$baseUrl$path'),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: jsonEncode(body),
     );
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kotlin/api/client/api_client.dart';
-import 'package:kotlin/api/dto/sign_up.dart';
+import 'package:kotlin/api/dto/auth/sign_up_oj.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
@@ -8,13 +8,14 @@ class CreateAccountScreen extends StatefulWidget {
   @override
   _CreateAccountScreenState createState() => _CreateAccountScreenState();
 }
-
+///////////lost token
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final TextEditingController _fullnameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   ApiClient apiClient = ApiClient();
+
   // Tạo tài khoản khi nhấn nút "Tiếp theo"
   Future<void> _createAccount() async {
   final fullname = _fullnameController.text.trim();
@@ -36,7 +37,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
   try {
     final res = await apiClient.post<SignUpObject>(
-      "/api/auth/signup",
+      "/api/login_page/signup",
       fromJson: SignUpObject.fromJson,
       body: signupData.toJson(),
     );
@@ -52,7 +53,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   }
 }
 
-
+/////////////////////
   @override
   Widget build(BuildContext context) {
     return Scaffold(

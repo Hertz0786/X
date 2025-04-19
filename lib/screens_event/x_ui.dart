@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'profile_screen.dart'; // Import màn hình hồ sơ
+import 'user/profile_screen.dart'; // Import màn hình hồ sơ
 
 class XUI extends StatelessWidget {
   const XUI({super.key});
