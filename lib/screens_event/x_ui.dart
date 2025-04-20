@@ -1,8 +1,42 @@
 import 'package:flutter/material.dart';
-import 'user/profile_screen.dart'; // Import màn hình hồ sơ
+import 'package:kotlin/api/client/api_client.dart';
+import 'package:kotlin/api/client/post/get_all_post_api.dart';
+import 'package:kotlin/api/dto/post/create_post_oj.dart';
+import 'package:kotlin/api/client/post/create_post_api.dart';
+import 'package:kotlin/api/client/token_storage.dart';
+import 'user/profile_screen.dart';
 
-class XUI extends StatelessWidget {
+class XUI extends StatefulWidget {
   const XUI({super.key});
+  static final GlobalKey<XUIState> xuiKey = GlobalKey<XUIState>();
+
+  @override
+  State<XUI> createState() => XUIState();
+}
+
+class XUIState extends State<XUI> {
+  List<CreatePostObject> posts = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchPosts();
+  }
+
+  Future<void> fetchPosts() async {
+    try {
+      final api = GetAllPostApi(apiClient: ApiClient());
+      final data = await api.fetchPosts();
+      setState(() {
+        posts = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+      print("Lỗi khi lấy bài viết: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +47,6 @@ class XUI extends StatelessWidget {
         elevation: 0,
         leading: GestureDetector(
           onTap: () {
-            // Mở màn hình hồ sơ khi ấn vào avatar
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ProfileScreen()),
@@ -50,47 +83,39 @@ class XUI extends StatelessWidget {
           ),
         ),
       ),
-      body: ListView(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
         children: [
-          ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Colors.white,
-              backgroundImage: NetworkImage(
-                "https://cryptologos.cc/logos/uniswap-uniswap-logo.png",
-              ),
-            ),
-            title: Row(
-              children: const [
-                Text("Uniswap Labs 🦄", style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(width: 5),
-                Icon(Icons.verified, size: 16, color: Colors.blue),
-                SizedBox(width: 5),
-                Text("@Uniswap · Quảng cáo", style: TextStyle(color: Colors.grey, fontSize: 12)),
-              ],
-            ),
-            subtitle: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 4),
-                Text("Easily access thousands of tokens across 12 chains."),
-                SizedBox(height: 4),
-                Text("The safe, simple way to swap on the largest onchain marketplace."),
-                SizedBox(height: 12),
-                Card(
-                  color: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                  child: SizedBox(
-                    height: 200,
-                    child: Center(
-                      child: Text("🦄 Uniswap", style: TextStyle(fontSize: 24)),
-                    ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: posts.length,
+              itemBuilder: (context, index) {
+                final post = posts[index];
+                return ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Colors.white,
+                    backgroundImage: NetworkImage(
+                        "https://cryptologos.cc/logos/uniswap-uniswap-logo.png"),
                   ),
-                )
-              ],
+                  title: Text(
+                    post.text ?? '',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  subtitle: post.image != null
+                      ? Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Image.network(post.image!),
+                  )
+                      : null,
+                );
+              },
             ),
-          )
+          ),
+
         ],
       ),
     );
   }
 }
+

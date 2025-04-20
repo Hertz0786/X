@@ -3,9 +3,8 @@ import 'x_ui.dart';
 import 'notification/notification_screen.dart';
 import 'message/message_screen.dart';
 import 'post/compose_post_screen.dart';
-import 'search/saearch_screen.dart'; // Import màn hình tìm kiếm
-import 'login_page/first.dart';  // Import màn hình đăng nhập để quay lại khi đăng xuất
-//import 'package:shared_preferences/shared_preferences.dart';  // Import SharedPreferences để lấy token
+import 'search/saearch_screen.dart';
+import 'login_page/first.dart';
 import 'package:kotlin/api/client/token_storage.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -17,14 +16,20 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  final GlobalKey<XUIState> _xuiKey = GlobalKey<XUIState>();
 
-  final List<Widget> _screens = const [
-    XUI(),
-    NotificationScreen(),
-    MessageScreen(),
-  ];
+  late final List<Widget> _screens;
 
-  // Hàm điều hướng khi nhấn nút tìm kiếm ở BottomNavigationBar
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      XUI(key: _xuiKey),
+      const NotificationScreen(),
+      const MessageScreen(),
+    ];
+  }
+
   void _onSearchPressed() {
     Navigator.push(
       context,
@@ -32,27 +37,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  // Hàm đăng xuất, chuyển về màn hình đăng nhập
   void _logout() async {
-    // Xóa token khi đăng xuất
     await TokenStorage.removeToken();
-
-    // Kiểm tra token đã được xóa chưa
-    await checkToken(); // Gọi hàm kiểm tra token sau khi xóa
-
-    // Chuyển về màn hình đăng nhập
+    await checkToken();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const FirstScreen()),
     );
   }
 
-  // Hàm kiểm tra token đã bị xóa
   Future<void> checkToken() async {
-    // Lấy token từ SharedPreferences
     String? token = await TokenStorage.getToken();
-
-    // Kiểm tra token đã bị xóa chưa
     if (token == null) {
       print("Token đã bị xóa khỏi SharedPreferences.");
     } else {
@@ -60,19 +55,27 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     }
   }
 
-  // Hàm lấy token từ SharedPreferences
   Future<String?> _getToken() async {
-    return await TokenStorage.getToken();  // Sử dụng TokenStorage để lấy token
+    return await TokenStorage.getToken();
   }
 
-  // Hàm điều hướng sau khi lấy token
-  void _navigateToComposePostScreen(String token) {
-    // Đảm bảo sử dụng context trước khi gọi async
-    if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => ComposePostScreen(token: token)),
-      );
+  void _navigateToComposePostScreen(String token) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ComposePostScreen(token: token)),
+    );
+
+    if (result == true) {
+      // Nếu đang ở tab Home, chỉ cần reload
+      if (_currentIndex == 0) {
+        _xuiKey.currentState?.fetchPosts();
+      } else {
+        // Chuyển về Home rồi reload
+        setState(() => _currentIndex = 0);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _xuiKey.currentState?.fetchPosts();
+        });
+      }
     }
   }
 
@@ -84,22 +87,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         title: const Text("Trang Chính", style: TextStyle(color: Colors.white)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.exit_to_app, color: Colors.white),  // Nút đăng xuất
-            onPressed: _logout,  // Gọi hàm đăng xuất
+            icon: const Icon(Icons.exit_to_app, color: Colors.white),
+            onPressed: _logout,
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          // Lấy token trước khi thực hiện điều hướng
           String? token = await _getToken();
-
-          // Điều hướng ngay sau khi lấy token
           if (token != null) {
-            // Chuyển đến ComposePostScreen nếu token có sẵn
             _navigateToComposePostScreen(token);
           } else {
-            // Token không tồn tại, có thể thông báo lỗi hoặc chuyển đến màn hình đăng nhập
             _logout();
           }
         },
@@ -117,7 +115,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         currentIndex: _currentIndex,
         onTap: (index) {
           if (index == 1) {
-            // Nếu ấn vào tab tìm kiếm, gọi hàm _onSearchPressed()
             _onSearchPressed();
           } else {
             setState(() {

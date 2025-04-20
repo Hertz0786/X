@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:kotlin/api/client/api_client.dart';
 import 'package:kotlin/api/dto/post/create_post_oj.dart';
 import 'package:kotlin/api/client/post/create_post_api.dart';
-import 'package:kotlin/api/client/token_storage.dart';
 
 class ComposePostScreen extends StatefulWidget {
-  final String token; // Token để gửi kèm với yêu cầu tạo bài viết
+  final String token;
   const ComposePostScreen({super.key, required this.token});
 
   @override
@@ -14,65 +13,44 @@ class ComposePostScreen extends StatefulWidget {
 
 class _ComposePostScreenState extends State<ComposePostScreen> {
   final TextEditingController _controller = TextEditingController();
-  String? _imagePath; // Lưu trữ đường dẫn ảnh (nếu có)
+  String? _imagePath;
 
-  // Phương thức để gửi bài viết
   void _submitPost() async {
     final content = _controller.text.trim();
 
-    // Kiểm tra nếu người dùng nhập nội dung hoặc chọn ảnh
-    if (content.isNotEmpty || _imagePath != null) {
-      try {
-        // Lấy token từ TokenStorage
-        final token = await TokenStorage.getToken();
+    if (content.isEmpty && _imagePath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng cung cấp nội dung hoặc ảnh')),
+      );
+      return;
+    }
 
-        if (token == null) {
-          // Nếu không có token, yêu cầu người dùng đăng nhập lại
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Vui lòng đăng nhập lại!')),
-          );
-          return;
-        }
+    try {
+      final postData = CreatePostObject(
+        text: content,
+        image: _imagePath,
+        token: widget.token,
+      );
 
-        // Tạo đối tượng dữ liệu bài viết
-        final postData = CreatePostObject(
-          text: content,
-          image: _imagePath, // Nếu có ảnh, sẽ gửi URL ảnh
-          token: token,
-        );
+      final response = await CreatePostApi(apiClient: ApiClient()).createPost(postData);
 
-        // Gửi yêu cầu POST đến API
-        final response = await CreatePostApi(apiClient: ApiClient()).createPost(postData);
-
-        // Kiểm tra phản hồi từ API
-        if (response != null) {
-          // In thông báo kiểm tra nếu bài viết tạo thành công
-          print('Bài viết đã được tạo thành công: $response');
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Bài viết đã được tạo')),
-          );
-          Navigator.pop(context); // Quay lại màn hình trước
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Không thể tạo bài viết')),
-          );
-        }
-      } catch (error) {
-        print('Lỗi khi tạo bài viết: $error');
-        // Xử lý lỗi khi tạo bài viết
+      if (response != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi tạo bài viết: $error')),
+          const SnackBar(content: Text('Bài viết đã được tạo')),
+        );
+        Navigator.pop(context, true); // ✅ trả về để gọi fetchPosts()
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không thể tạo bài viết')),
         );
       }
-    } else {
-      // Thông báo nếu người dùng không nhập nội dung hoặc ảnh
+    } catch (error) {
+      print('Lỗi khi tạo bài viết: $error');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Vui lòng cung cấp nội dung hoặc ảnh')),
+        SnackBar(content: Text('Lỗi khi tạo bài viết: $error')),
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -103,12 +81,9 @@ class _ComposePostScreenState extends State<ComposePostScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            // Thêm nút chọn ảnh (nếu cần)
             ElevatedButton(
               onPressed: () {
-                // Logic để chọn ảnh và cập nhật _imagePath
-                // Bạn có thể dùng plugin image_picker ở đây
-                // _imagePath = pickedImagePath;
+                // TODO: dùng image_picker tại đây nếu cần
               },
               child: const Text("Chọn ảnh"),
             ),
