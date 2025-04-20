@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
 typedef FromJson<T> = T Function(Map<String, dynamic> json);

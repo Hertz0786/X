@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kotlin/api/client/api_client.dart';
 import 'package:kotlin/api/dto/post/create_post_oj.dart';
 import 'package:kotlin/api/client/post/create_post_api.dart';
+import 'package:kotlin/api/client/token_storage.dart';
 
 class ComposePostScreen extends StatefulWidget {
   final String token; // Token để gửi kèm với yêu cầu tạo bài viết
@@ -18,36 +19,60 @@ class _ComposePostScreenState extends State<ComposePostScreen> {
   // Phương thức để gửi bài viết
   void _submitPost() async {
     final content = _controller.text.trim();
+
+    // Kiểm tra nếu người dùng nhập nội dung hoặc chọn ảnh
     if (content.isNotEmpty || _imagePath != null) {
       try {
-        // Tạo đối tượng CreatePostObject với thông tin từ người dùng
+        // Lấy token từ TokenStorage
+        final token = await TokenStorage.getToken();
+
+        if (token == null) {
+          // Nếu không có token, yêu cầu người dùng đăng nhập lại
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Vui lòng đăng nhập lại!')),
+          );
+          return;
+        }
+
+        // Tạo đối tượng dữ liệu bài viết
         final postData = CreatePostObject(
           text: content,
-          image: _imagePath,
-          token: widget.token,
+          image: _imagePath, // Nếu có ảnh, sẽ gửi URL ảnh
+          token: token,
         );
 
-        // Sử dụng CreatePostApi để tạo bài viết
-        final apiClient = ApiClient();
-        final createPostApi = CreatePostApi(apiClient: apiClient);
+        // Gửi yêu cầu POST đến API
+        final response = await CreatePostApi(apiClient: ApiClient()).createPost(postData);
 
-        final response = await createPostApi.createPost(postData);
+        // Kiểm tra phản hồi từ API
+        if (response != null) {
+          // In thông báo kiểm tra nếu bài viết tạo thành công
+          print('Bài viết đã được tạo thành công: $response');
 
-        // Nếu thành công, thông báo và quay lại màn hình trước
-        print('Bài viết đã được tạo: ${response.text}');
-        Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Bài viết đã được tạo')),
+          );
+          Navigator.pop(context); // Quay lại màn hình trước
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Không thể tạo bài viết')),
+          );
+        }
       } catch (error) {
-        print('Không thể tạo bài viết: $error');
+        print('Lỗi khi tạo bài viết: $error');
+        // Xử lý lỗi khi tạo bài viết
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Lỗi khi tạo bài viết: $error')),
         );
       }
     } else {
+      // Thông báo nếu người dùng không nhập nội dung hoặc ảnh
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng cung cấp nội dung hoặc ảnh')),
+        SnackBar(content: Text('Vui lòng cung cấp nội dung hoặc ảnh')),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
