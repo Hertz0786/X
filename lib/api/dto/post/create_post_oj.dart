@@ -1,29 +1,26 @@
 class CreatePostObject {
-  final String text;
-  final String? image; // Ảnh có thể là null
-  final String token; // Thêm token vào lớp
+  String? id;
+  String? text;
+  String? image;
+  String? token;
 
   CreatePostObject({
-    required this.text,
-    this.image, // Ảnh là tùy chọn
-    required this.token, // Token là bắt buộc khi tạo bài viết
+    this.id,
+    this.text,
+    this.image,
+    this.token,
   });
 
-  // Phương thức chuyển JSON thành đối tượng CreatePostObject
-  factory CreatePostObject.fromJson(Map<String, dynamic> json) {
-    return CreatePostObject(
-      text: json['text'] ?? '', // Lấy text từ JSON
-      image: json['image'], // Lấy image từ JSON, nếu có
-      token: json['token'] ?? '', // Lấy token từ JSON
-    );
-  }
+  factory CreatePostObject.fromJson(Map<String, dynamic> json) => CreatePostObject(
+    id: json['_id'] ?? '', // ✅ lấy _id từ backend
+    text: json['text'],
+    image: json['image'],
+    token: json['token'],
+  );
 
-  // Phương thức chuyển đối tượng CreatePostObject thành JSON
-  Map<String, dynamic> toJson() {
-    return {
-      'text': text, // Gửi text
-      'image': image, // Gửi image (nếu có)
-      'token': token, // Gửi token
-    };
-  }
+  Map<String, dynamic> toJson() => {
+    'text': text,
+    'image': image,
+    'token': token,
+  };
 }
