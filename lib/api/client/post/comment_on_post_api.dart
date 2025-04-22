@@ -1,22 +1,25 @@
 import 'package:kotlin/api/client/api_client.dart';
 import 'package:kotlin/api/dto/post/comment_on_post_oj.dart';
+import 'package:kotlin/api/dto/post/create_post_oj.dart';
 
 class CommentService {
   final ApiClient _apiClient;
 
   CommentService(this._apiClient);
 
-  Future<void> commentOnPost(CommentOnPostObject comment) async {
+  Future<CreatePostObject> commentOnPost(CommentOnPostObject comment) async {
     final String path = '/api/posts/comment/${comment.idpost}';
 
-    await _apiClient.post<void>(
+    final updatedPost = await _apiClient.post<CreatePostObject>(
       path,
-
       body: comment.toJson(),
       token: comment.token,
-      fromJson: (_) => null, // Không cần decode object trả về
-
-
+      fromJson: (json) {
+        final postJson = json['post'];
+        return CreatePostObject.fromJson(postJson);
+      },
     );
+
+    return updatedPost;
   }
 }
