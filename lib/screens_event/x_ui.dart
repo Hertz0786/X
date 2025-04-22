@@ -24,9 +24,9 @@ class XUIState extends State<XUI> {
   }
 
   Future<void> fetchPosts() async {
-    try {
-      final api = GetAllPostApi(apiClient: ApiClient());
-      final data = await api.fetchPosts();
+        try {
+          final api = GetAllPostApi(apiClient: ApiClient());
+          final data = await api.fetchPosts();
       setState(() {
         posts = data;
         isLoading = false;

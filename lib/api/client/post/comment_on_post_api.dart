@@ -7,13 +7,16 @@ class CommentService {
   CommentService(this._apiClient);
 
   Future<void> commentOnPost(CommentOnPostObject comment) async {
-    final String path = '/api/posts/${comment.idpost}/comment';
+    final String path = '/api/posts/comment/${comment.idpost}';
 
     await _apiClient.post<void>(
       path,
+
       body: comment.toJson(),
       token: comment.token,
       fromJson: (_) => null, // Không cần decode object trả về
+
+
     );
   }
 }
