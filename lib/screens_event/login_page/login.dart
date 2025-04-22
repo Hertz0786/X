@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:kotlin/screens_event/main_navigation.dart';
-import 'forgot_password.dart'; // Import màn hình Quên mật khẩu
+import 'forgot_password.dart';
 import 'package:kotlin/api/dto/auth/login_oj.dart';
 import 'package:kotlin/api/client/auth/auth_login_api.dart';
 import 'package:kotlin/api/client/token_storage.dart';
+import 'package:kotlin/api/client/id_storage.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -15,9 +16,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final AuthApi _authApi = AuthApi(); // Khởi tạo AuthApi
+  final AuthApi _authApi = AuthApi();
 
-  // Hàm đăng nhập sử dụng LoginObject
   void _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -29,46 +29,39 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Tạo đối tượng LoginObject
     final loginObject = LoginObject(username: email, password: password);
 
     try {
-      final response = await _authApi.login(loginObject); // Gọi login API với LoginObject
+      final response = await _authApi.login(loginObject);
+      print("🔁 Phản hồi từ API login: $response");
 
-      if (response != null && response['token'] != null) {
-        final token = response['token'];
+      final token = response['accessToken'] ?? response['token'];
+      final userId = response['_Id'] ?? response['_id'];
 
-        // Lưu token vào SharedPreferences thông qua TokenStorage
-        await TokenStorage.saveToken(token);
-
-        // Kiểm tra lại token đã được lưu
-        await checkToken(); // Gọi hàm checkToken để kiểm tra token
-
-        // Sau khi đăng nhập thành công, bạn có thể chuyển hướng đến màn hình chính
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
-        );
-      } else {
+      if (token == null || userId == null) {
+        print("❌ Thiếu token hoặc userId trong phản hồi");
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Sai email hoặc mật khẩu")),
+          const SnackBar(content: Text("Không thể đăng nhập: thiếu dữ liệu")),
         );
+        return;
       }
-    } catch (e) {
-      // Hiển thị lỗi nếu đăng nhập thất bại
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Đã xảy ra lỗi khi đăng nhập")),
-      );
-    }
-  }
 
-  // Kiểm tra token đã lưu
-  Future<void> checkToken() async {
-    String? token = await TokenStorage.getToken();
-    if (token != null) {
-      print('Token đã được lưu: $token');
-    } else {
-      print('Token chưa được lưu');
+      await TokenStorage.saveToken(token);
+      await IdStorage.saveUserId(userId);
+
+      print("✅ Token đã lưu: $token");
+      print("🧾 ID người dùng đã lưu: $userId");
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+      );
+    } catch (e, stack) {
+      print("🔥 Lỗi khi login: $e");
+      print("📌 Stacktrace: $stack");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Lỗi đăng nhập: $e")),
+      );
     }
   }
 
@@ -80,9 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context); // Quay lại màn hình trước
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
         title: const Icon(Icons.clear, color: Colors.white, size: 30),
@@ -137,15 +128,10 @@ class _LoginScreenState extends State<LoginScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const ForgotPasswordScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                 );
               },
-              child: const Text(
-                'Quên mật khẩu?',
-                style: TextStyle(color: Colors.grey),
-              ),
+              child: const Text('Quên mật khẩu?', style: TextStyle(color: Colors.grey)),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -156,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              onPressed: _login, // Gọi hàm đăng nhập khi bấm nút
+              onPressed: _login,
               child: const Center(
                 child: Text('Đăng nhập', style: TextStyle(color: Colors.white)),
               ),

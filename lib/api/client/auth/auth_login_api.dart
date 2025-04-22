@@ -7,17 +7,19 @@ class AuthApi {
   // Hàm đăng nhập sử dụng LoginObject
   Future<Map<String, dynamic>> login(LoginObject loginObject) async {
     final response = await _apiClient.post(
-      '/api/auth/login',  // Địa chỉ API đăng nhập
-      body: loginObject.toJson(),  // Chuyển đổi LoginObject thành JSON
-      fromJson: (json) => json,  // Dữ liệu trả về từ API (có thể là token, thông tin người dùng...)
+      '/api/auth/login',
+      body: loginObject.toJson(),
+      fromJson: (json) => json,
     );
-    print("$response");
 
-    // Kiểm tra phản hồi và lấy accessToken từ response
-    if (response != null && response['accessToken'] != null) {
-      return {'token': response['accessToken']};  // Trả về accessToken nếu có
+    print("📨 Phản hồi login: $response");
+
+    // ✅ Trả lại toàn bộ JSON response (gồm token, id, username, ...)
+    if (response != null && (response['accessToken'] != null || response['token'] != null)) {
+      return response;
     } else {
-      throw Exception('accessToken không tồn tại trong phản hồi');
+      throw Exception('Phản hồi không có token');
     }
   }
+
 }

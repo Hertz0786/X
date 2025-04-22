@@ -6,6 +6,7 @@ import 'post/compose_post_screen.dart';
 import 'search/saearch_screen.dart';
 import 'login_page/first.dart';
 import 'package:kotlin/api/client/token_storage.dart';
+import 'package:kotlin/api/client/id_storage.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -17,46 +18,47 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
   final GlobalKey<XUIState> _xuiKey = GlobalKey<XUIState>();
-
   late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
     _screens = [
-      XUI(key: _xuiKey),
-      const NotificationScreen(),
-      const MessageScreen(),
+      XUI(key: _xuiKey),               // index 0: Home
+      const Offstage(),                // index 1: Hidden placeholder
+      const NotificationScreen(),      // index 2: Notifications
+      const MessageScreen(),           // index 3: Messages
     ];
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    final token = await TokenStorage.getToken();
+    final userId = await IdStorage.getUserId();
+
+    print("✅ Token đã lưu: $token");
+    print("🧾 User ID đã lưu: $userId");
+
+    if (token == null || userId == null) {
+      print("❌ Token hoặc User ID không tồn tại. Quay lại đăng nhập.");
+      _logout();
+    }
+  }
+
+  void _logout() async {
+    await TokenStorage.removeToken();
+    await IdStorage.removeUserId();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const FirstScreen()),
+    );
   }
 
   void _onSearchPressed() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const SearchScreen()),
+      MaterialPageRoute(builder: (_) => const SearchScreen()),
     );
-  }
-
-  void _logout() async {
-    await TokenStorage.removeToken();
-    await checkToken();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const FirstScreen()),
-    );
-  }
-
-  Future<void> checkToken() async {
-    String? token = await TokenStorage.getToken();
-    if (token == null) {
-      print("Token đã bị xóa khỏi SharedPreferences.");
-    } else {
-      print("Token vẫn còn trong SharedPreferences: $token");
-    }
-  }
-
-  Future<String?> _getToken() async {
-    return await TokenStorage.getToken();
   }
 
   void _navigateToComposePostScreen(String token) async {
@@ -66,11 +68,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
 
     if (result == true) {
-      // Nếu đang ở tab Home, chỉ cần reload
       if (_currentIndex == 0) {
         _xuiKey.currentState?.fetchPosts();
       } else {
-        // Chuyển về Home rồi reload
         setState(() => _currentIndex = 0);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _xuiKey.currentState?.fetchPosts();
@@ -94,7 +94,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          String? token = await _getToken();
+          final token = await TokenStorage.getToken();
           if (token != null) {
             _navigateToComposePostScreen(token);
           } else {
@@ -115,11 +115,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         currentIndex: _currentIndex,
         onTap: (index) {
           if (index == 1) {
-            _onSearchPressed();
+            _onSearchPressed(); // Mở màn tìm kiếm riêng
+          } else if (index < _screens.length) {
+            setState(() => _currentIndex = index);
           } else {
-            setState(() {
-              _currentIndex = index;
-            });
+            print("⚠️ Index không hợp lệ: $index");
           }
         },
         type: BottomNavigationBarType.fixed,

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:kotlin/api/client/api_client.dart';
 import 'package:kotlin/api/dto/post/create_post_oj.dart';
 import 'package:kotlin/api/client/post/comment_on_post_api.dart';
-import 'package:kotlin/api/dto/post/comment_on_post_oj.dart';
-import 'package:kotlin/api/client/token_storage.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final CreatePostObject post;
@@ -18,7 +16,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   final TextEditingController _commentController = TextEditingController();
   bool _isSubmitting = false;
 
-  // Gửi bình luận
   Future<void> _submitComment() async {
     final text = _commentController.text.trim();
     if (text.isEmpty) return;
@@ -26,23 +23,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final token = await TokenStorage.getToken();
-      if (token == null) throw Exception("Token không tồn tại.");
-
-      final comment = CommentOnPostObject(
-        id: widget.post.id!,
+      await CommentOnPostApi(apiClient: ApiClient()).commentOnPost(
+        postId: widget.post.id!,
         text: text,
-        token: token,
       );
-
-      await CommentOnPostApi(apiClient: ApiClient()).commentOnPost(comment);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Bình luận đã được gửi")),
       );
 
       _commentController.clear();
-      // TODO: Gọi API lấy lại danh sách comment nếu cần
+      // TODO: Load lại danh sách bình luận nếu có
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Lỗi: $e")),

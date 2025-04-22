@@ -1,17 +1,17 @@
-class GetMeObject {
-  final String token;
+class UserObject {
+  final String id;
+  final String name;
+  final String email;
 
-  GetMeObject({required this.token});
+  UserObject({
+    required this.id,
+    required this.name,
+    required this.email,
+  });
 
-  factory GetMeObject.fromJson(Map<String, dynamic> json) {
-    return GetMeObject(
-      token: json['token'] ?? '', // Giả sử API trả về token
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'token': token, // Gửi lại token
-    };
-  }
+  factory UserObject.fromJson(Map<String, dynamic> json) => UserObject(
+    id: json['_id'] ?? '',
+    name: json['name'] ?? '',
+    email: json['email'] ?? '',
+  );
 }
