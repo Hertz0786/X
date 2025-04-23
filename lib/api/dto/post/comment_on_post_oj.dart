@@ -1,47 +1,35 @@
-import 'package:kotlin/api/client/id_storage.dart';
-import 'package:kotlin/api/client/token_storage.dart';
-
-
 class CommentOnPostObject {
-  final String id;
+  final String idpost;       // postId
   final String text;
-  final String userId;
   final String token;
 
   CommentOnPostObject({
-    required this.id,
+    required this.idpost,
     required this.text,
-    required this.userId,
     required this.token,
   });
 
   factory CommentOnPostObject.fromJson(Map<String, dynamic> json) =>
       CommentOnPostObject(
-        id: json['id'] ?? '',
+        idpost: json['idpost'] ?? '',
         text: json['text'] ?? '',
-        userId: json['user'] ?? '',
         token: json['token'] ?? '',
       );
 
   Map<String, dynamic> toJson() => {
-    'text': text,
-    'user': userId,
+    'text': text, // chỉ cần gửi text trong body
   };
 
   static Future<CommentOnPostObject> fromLocalStorage({
-    required String id,
+    required String idpost,
     required String text,
     required String token,
   }) async {
-    final userId = await IdStorage.getUserId();
-    if (userId == null) throw Exception("Chưa đăng nhập");
-
+    // Không cần lấy userId nữa vì backend đã dùng token để xác định
     return CommentOnPostObject(
-      id: id,
+      idpost: idpost,
       text: text,
-      userId: userId,
       token: token,
     );
   }
 }
-

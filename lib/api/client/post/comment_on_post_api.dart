@@ -1,33 +1,25 @@
 import 'package:kotlin/api/client/api_client.dart';
-import 'package:kotlin/api/client/token_storage.dart';
 import 'package:kotlin/api/dto/post/comment_on_post_oj.dart';
+import 'package:kotlin/api/dto/post/create_post_oj.dart';
 
+class CommentService {
+  final ApiClient _apiClient;
 
-class CommentOnPostApi {
-  final ApiClient apiClient;
+  CommentService(this._apiClient);
 
-  CommentOnPostApi({required this.apiClient});
+  Future<CreatePostObject> commentOnPost(CommentOnPostObject comment) async {
+    final String path = '/api/posts/comment/${comment.idpost}';
 
-  Future<void> commentOnPost({
-    required String postId,
-    required String text,
-  }) async {
-    final token = await TokenStorage.getToken();
-    if (token == null) {
-      throw Exception("Không có token, vui lòng đăng nhập lại.");
-    }
-
-    final commentData = await CommentOnPostObject.fromLocalStorage(
-      id: postId,
-      text: text,
-      token: token,
+    final updatedPost = await _apiClient.post<CreatePostObject>(
+      path,
+      body: comment.toJson(),
+      token: comment.token,
+      fromJson: (json) {
+        final postJson = json['post'];
+        return CreatePostObject.fromJson(postJson);
+      },
     );
 
-    await apiClient.post(
-      '/api/comment/${commentData.id}', // ✅ route chuẩn
-      body: commentData.toJson(),       // ✅ chứa text + user
-      fromJson: (json) => null,
-      token: token,
-    );
+    return updatedPost;
   }
 }

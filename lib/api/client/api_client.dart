@@ -53,14 +53,20 @@ class ApiClient {
     }
   }
 
-  Future<void> delete(String path) async {
+  Future<void> delete(String path, {String? token}) async {
+    final headers = {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+
     final response = await http.delete(
       Uri.parse('$baseUrl$path'),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
     );
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('DELETE thất bại: ${response.body}');
     }
   }
+
 }

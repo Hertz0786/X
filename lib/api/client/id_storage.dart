@@ -21,15 +21,10 @@ class IdStorage {
     await prefs.remove(_userIdKey);
   }
 
-  // Kiểm tra userId có tồn tại không (debug)
+  // Debug
   static Future<void> checkUserId() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString(_userIdKey);
-
-    if (userId != null) {
-      print('User ID đã lưu: $userId');
-    } else {
-      print('User ID chưa được lưu');
-    }
+    print(userId != null ? 'User ID đã lưu: $userId' : 'User ID chưa được lưu');
   }
 }

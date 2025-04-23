@@ -1,19 +1,19 @@
 class DeletePostObject {
-  final String id;
+  final String idpost;
 
-  DeletePostObject({required this.id});
+  DeletePostObject({required this.idpost});
 
   // Phương thức chuyển đổi từ JSON sang đối tượng Dart
   factory DeletePostObject.fromJson(Map<String, dynamic> json) {
     return DeletePostObject(
-      id: json['id'] ?? '', // Lấy id từ JSON
+      idpost: json['idpost'] ?? '', // Lấy id từ JSON
     );
   }
 
   // Phương thức chuyển đổi đối tượng Dart thành JSON
   Map<String, dynamic> toJson() {
     return {
-      'id': id, // Gửi id của bài viết cần xóa
+      'idpost': idpost, // Gửi id của bài viết cần xóa
     };
   }
 }

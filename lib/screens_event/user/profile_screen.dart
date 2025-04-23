@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
-import 'edit_profile_screen.dart'; // Import màn hình chỉnh sửa hồ sơ
+import 'edit_profile_screen.dart';
+import 'liked_post_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Giả lập số liệu — thay bằng dữ liệu thật nếu có
+    final int postCount = 12;
+    final int likedCount = 47;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -14,69 +19,113 @@ class ProfileScreen extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context); // Quay lại màn hình trước
+            Navigator.pop(context);
           },
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Avatar và tên người dùng
-            const Center(
-              child: CircleAvatar(
-                radius: 60,
-                backgroundColor: Colors.purple,
-                child: Text('H', style: TextStyle(color: Colors.white, fontSize: 30)),
-              ),
+            const CircleAvatar(
+              radius: 60,
+              backgroundColor: Colors.purple,
+              child: Text('H', style: TextStyle(color: Colors.white, fontSize: 30)),
             ),
             const SizedBox(height: 16),
-            const Center(
-              child: Text(
-                "Nguyễn Tiến Dầu", // Tên người dùng
-                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Center(
-              child: Text(
-                "@nguyentien", // Tên hiển thị (username)
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            // Thông tin khác (ví dụ: email, số điện thoại)
             const Text(
-              "Thông tin liên lạc:",
-              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+              "Nguyễn Tiến Dầu",
+              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
-            const Text("Email: example@example.com", style: TextStyle(color: Colors.grey)),
-            const SizedBox(height: 8),
-            const Text("Số điện thoại: 0123456789", style: TextStyle(color: Colors.grey)),
+            const Text(
+              "@nguyentien",
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 20),
+
+            // Thống kê
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildStat("Bài viết", postCount),
+                _buildStat("Đã thích", likedCount),
+              ],
+            ),
 
             const SizedBox(height: 30),
-            // Nút chỉnh sửa hồ sơ
-            ElevatedButton(
+
+            // Thông tin liên hệ
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    "Thông tin liên lạc:",
+                    style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text("Email: example@example.com", style: TextStyle(color: Colors.grey)),
+                  SizedBox(height: 8),
+                  Text("Số điện thoại: 0123456789", style: TextStyle(color: Colors.grey)),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // Nút chỉnh sửa
+            ElevatedButton.icon(
               onPressed: () {
-                // Mở màn hình chỉnh sửa hồ sơ khi bấm vào nút này
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const EditProfileScreen()),
                 );
               },
+              icon: const Icon(Icons.edit, color: Colors.white),
+              label: const Text("Chỉnh sửa hồ sơ", style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               ),
-              child: const Text("Chỉnh sửa hồ sơ", style: TextStyle(color: Colors.white)),
+            ),
+
+            const SizedBox(height: 12),
+
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LikedPostsScreen()),
+                );
+              },
+              icon: const Icon(Icons.favorite, color: Colors.white),
+              label: const Text("Bài viết đã thích", style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.pinkAccent,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildStat(String label, int count) {
+    return Column(
+      children: [
+        Text(
+          "$count",
+          style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.grey),
+        ),
+      ],
     );
   }
 }

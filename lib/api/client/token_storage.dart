@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'dart:convert';
 class TokenStorage {
   static const _tokenKey = 'user_token';
 
@@ -32,4 +32,21 @@ class TokenStorage {
       print('Token chưa được lưu');
     }
   }
+
+  // static Future<String?> getUserIdFromToken() async {
+  //   final token = await getToken();
+  //   if (token == null) return null;
+  //
+  //   try {
+  //     final parts = token.split('.');
+  //     if (parts.length != 3) return null;
+  //
+  //     final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+  //     final Map<String, dynamic> json = jsonDecode(payload);
+  //     return json['id'] ?? json['_id']; // tùy backend gán key là gì
+  //   } catch (_) {
+  //     return null;
+  //   }
+  // }
+
 }
