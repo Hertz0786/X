@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:kotlin/api/client/api_client.dart';
-import 'package:kotlin/api/client/post/get_all_post_api.dart';
 import 'package:kotlin/api/client/post/delete_post_api.dart';
-import 'package:kotlin/api/client/id_storage.dart'; // 👈 dùng để lấy current user id
+import 'package:kotlin/api/client/post/get_all_post_api.dart';
+import 'package:kotlin/api/client/post/like_unlike_post_api.dart';
+import 'package:kotlin/api/client/id_storage.dart';
+import 'package:kotlin/api/client/token_storage.dart';
 import 'package:kotlin/api/dto/post/create_post_oj.dart';
 import 'post/post_detail_screen.dart';
 import 'user/profile_screen.dart';
@@ -28,7 +30,7 @@ class XUIState extends State<XUI> {
   }
 
   Future<void> loadCurrentUser() async {
-    final id = await IdStorage.getUserId(); // 👈 dùng IdStorage thay vì token
+    final id = await IdStorage.getUserId();
     setState(() {
       currentUserId = id;
     });
@@ -76,6 +78,21 @@ class XUIState extends State<XUI> {
     }
   }
 
+  Future<void> _toggleLike(CreatePostObject post, int index) async {
+    final token = await TokenStorage.getToken();
+    if (token == null || post.id == null) return;
+
+    try {
+      final updatedPost = await LikeUnlikePostApi(apiClient: ApiClient())
+          .likeOrUnlikePost(postId: post.id!, token: token);
+      setState(() {
+        posts[index] = updatedPost;
+      });
+    } catch (e) {
+      print("Lỗi khi like/unlike: $e");
+    }
+  }
+
   String _formatDateTime(String dateTime) {
     final dt = DateTime.tryParse(dateTime);
     if (dt == null) return '';
@@ -87,6 +104,10 @@ class XUIState extends State<XUI> {
     if (diff.inHours < 24) return "${diff.inHours} giờ trước";
     if (diff.inDays < 7) return "${diff.inDays} ngày trước";
     return "${dt.day}/${dt.month}/${dt.year}";
+  }
+
+  bool _isLikedByCurrentUser(CreatePostObject post) {
+    return post.likes?.contains(currentUserId) ?? false;
   }
 
   @override
@@ -140,6 +161,7 @@ class XUIState extends State<XUI> {
         itemCount: posts.length,
         itemBuilder: (context, index) {
           final post = posts[index];
+          final isLiked = _isLikedByCurrentUser(post);
           return Card(
             color: Colors.grey[900],
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -201,12 +223,11 @@ class XUIState extends State<XUI> {
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.favorite_border, color: Colors.pinkAccent),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Bạn đã thích bài viết')),
-                            );
-                          },
+                          icon: Icon(
+                            isLiked ? Icons.favorite : Icons.favorite_border,
+                            color: isLiked ? Colors.pinkAccent : Colors.white,
+                          ),
+                          onPressed: () => _toggleLike(post, index),
                         ),
                         Text(
                           "${post.likes?.length ?? 0} lượt thích",
