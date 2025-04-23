@@ -2,21 +2,22 @@ import 'package:kotlin/api/client/api_client.dart';
 import 'package:kotlin/api/client/token_storage.dart';
 import 'package:kotlin/api/dto/auth/get_me_oj.dart';
 
-class GetMeApi {
+class AuthMeApi {
   final ApiClient apiClient;
 
-  GetMeApi({required this.apiClient});
+  AuthMeApi({required this.apiClient});
 
-  Future<UserObject> getMe() async {
+  Future<GetMeObject> fetchCurrentUser() async {
     final token = await TokenStorage.getToken();
-    if (token == null) {
-      throw Exception("Token không tồn tại. Vui lòng đăng nhập.");
-    }
+    if (token == null) throw Exception("Token không tồn tại");
 
-    return await apiClient.get(
+    final response = await apiClient.post(
       '/api/auth/me',
-      fromJson: (json) => UserObject.fromJson(json),
       token: token,
+      body: {},
+      fromJson: (json) => GetMeObject.fromJson(json),
     );
+
+    return response;
   }
 }

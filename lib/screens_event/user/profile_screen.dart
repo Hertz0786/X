@@ -1,16 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:kotlin/api/client/api_client.dart';
+import 'package:kotlin/api/dto/auth/get_me_oj.dart';
+import 'package:kotlin/api/client/auth/auth_me_api.dart';
 import 'edit_profile_screen.dart';
 import 'liked_post_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Giả lập số liệu — thay bằng dữ liệu thật nếu có
-    final int postCount = 12;
-    final int likedCount = 47;
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
 
+class _ProfileScreenState extends State<ProfileScreen> {
+  GetMeObject? user;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserInfo();
+  }
+
+  Future<void> fetchUserInfo() async {
+    try {
+      final api = AuthMeApi(apiClient: ApiClient());
+      final me = await api.fetchCurrentUser();
+      setState(() {
+        user = me;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Lỗi khi load user: $e");
+      setState(() => isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -18,69 +45,66 @@ class ProfileScreen extends StatelessWidget {
         title: const Text("Hồ sơ", style: TextStyle(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : user == null
+          ? const Center(child: Text("Không thể tải thông tin người dùng", style: TextStyle(color: Colors.white)))
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 60,
               backgroundColor: Colors.purple,
-              child: Text('H', style: TextStyle(color: Colors.white, fontSize: 30)),
+              backgroundImage: (user!.profileImg != null && user!.profileImg!.isNotEmpty)
+                  ? NetworkImage(user!.profileImg!)
+                  : null,
+              child: (user!.profileImg == null || user!.profileImg!.isEmpty)
+                  ? Text(user!.username[0].toUpperCase(),
+                  style: const TextStyle(color: Colors.white, fontSize: 30))
+                  : null,
             ),
             const SizedBox(height: 16),
-            const Text(
-              "Nguyễn Tiến Dầu",
-              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            Text(
+              user!.fullname ?? user!.username,
+              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const Text(
-              "@nguyentien",
-              style: TextStyle(color: Colors.grey),
-            ),
+            Text("@${user!.username}", style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 20),
-
-            // Thống kê
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildStat("Bài viết", postCount),
-                _buildStat("Đã thích", likedCount),
+                _buildStat("Bài viết", 0), // có thể fetch count thật sau
+                _buildStat("Đã thích", 0),
               ],
             ),
-
             const SizedBox(height: 30),
-
-            // Thông tin liên hệ
             Align(
               alignment: Alignment.centerLeft,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     "Thông tin liên lạc:",
                     style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 8),
-                  Text("Email: example@example.com", style: TextStyle(color: Colors.grey)),
-                  SizedBox(height: 8),
-                  Text("Số điện thoại: 0123456789", style: TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 8),
+                  Text("Email: ${user!.email}", style: const TextStyle(color: Colors.grey)),
+                  if (user!.bio != null && user!.bio!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text("Bio: ${user!.bio}", style: const TextStyle(color: Colors.grey)),
+                  ],
                 ],
               ),
             ),
-
             const SizedBox(height: 30),
-
-            // Nút chỉnh sửa
             ElevatedButton.icon(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const EditProfileScreen()),
-                );
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => const EditProfileScreen()));
               },
               icon: const Icon(Icons.edit, color: Colors.white),
               label: const Text("Chỉnh sửa hồ sơ", style: TextStyle(color: Colors.white)),
@@ -90,15 +114,11 @@ class ProfileScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               ),
             ),
-
             const SizedBox(height: 12),
-
             ElevatedButton.icon(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LikedPostsScreen()),
-                );
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => const LikedPostsScreen()));
               },
               icon: const Icon(Icons.favorite, color: Colors.white),
               label: const Text("Bài viết đã thích", style: TextStyle(color: Colors.white)),
@@ -117,14 +137,8 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildStat(String label, int count) {
     return Column(
       children: [
-        Text(
-          "$count",
-          style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-        ),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.grey),
-        ),
+        Text("$count", style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(color: Colors.grey)),
       ],
     );
   }
