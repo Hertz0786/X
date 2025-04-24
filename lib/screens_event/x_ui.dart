@@ -188,7 +188,7 @@ class XUIState extends State<XUI> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            "Người đăng: ${post.userId ?? 'Ẩn danh'}",
+                            "Người đăng: ${post.fullname ?? post.username ?? post.userId}",
                             style: const TextStyle(color: Colors.white70),
                           ),
                         ),

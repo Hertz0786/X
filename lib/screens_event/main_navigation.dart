@@ -24,10 +24,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     _screens = [
-      XUI(key: _xuiKey),               // index 0: Home
-      const Offstage(),                // index 1: Hidden placeholder
-      const NotificationScreen(),      // index 2: Notifications
-      const MessageScreen(),           // index 3: Messages
+      XUI(key: _xuiKey), // Home
+      const Offstage(), // Search (handled separately)
+      const NotificationScreen(),
+      const MessageScreen(),
     ];
     _checkAuth();
   }
@@ -36,11 +36,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final token = await TokenStorage.getToken();
     final userId = await IdStorage.getUserId();
 
-    print("✅ Token đã lưu: $token");
-    print("🧾 User ID đã lưu: $userId");
+    debugPrint("✅ Token: $token");
+    debugPrint("🧾 User ID: $userId");
 
     if (token == null || userId == null) {
-      print("❌ Token hoặc User ID không tồn tại. Quay lại đăng nhập.");
       _logout();
     }
   }
@@ -61,10 +60,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  void _navigateToComposePostScreen(String token) async {
+  Future<void> _navigateToComposePostScreen() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ComposePostScreen(token: token)),
+      MaterialPageRoute(builder: (_) => const ComposePostScreen()),
     );
 
     if (result == true) {
@@ -82,6 +81,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: const Text("Trang Chính", style: TextStyle(color: Colors.white)),
@@ -93,14 +93,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final token = await TokenStorage.getToken();
-          if (token != null) {
-            _navigateToComposePostScreen(token);
-          } else {
-            _logout();
-          }
-        },
+        onPressed: _navigateToComposePostScreen,
         backgroundColor: Colors.blue,
         child: const Icon(Icons.add),
       ),
@@ -115,11 +108,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         currentIndex: _currentIndex,
         onTap: (index) {
           if (index == 1) {
-            _onSearchPressed(); // Mở màn tìm kiếm riêng
+            _onSearchPressed();
           } else if (index < _screens.length) {
             setState(() => _currentIndex = index);
-          } else {
-            print("⚠️ Index không hợp lệ: $index");
           }
         },
         type: BottomNavigationBarType.fixed,
