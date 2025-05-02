@@ -16,3 +16,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+//// dang o maingator thi k vao dc ho so
+////cd D:\Coding\pbl
+// npm run dev

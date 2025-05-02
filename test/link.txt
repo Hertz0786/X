@@ -1,0 +1,34 @@
+app.use("/api/auth", authRouters);
+app.use("/api/users", userRouters);
+app.use("/api/posts", postRouters);
+app.use("/api/notifications", notificationRouters);
+app.use("/api/messages", messageRouters);
+//////////////////////////
+
+router.post("/me", protectRoute, getMe); // dmm quy
+router.post("/signup", signup);
+router.post("/login", login);
+router.post("/logout", logout);
+
+/////////////////////////
+
+router.get("/", protectRoute, getNotifications);
+router.delete("/", protectRoute, deleteNotifications);
+
+//////////////////////////
+
+router.get("/likes/:id", protectRoute, getLikedPosts);
+router.get("/all", protectRoute, getAllPost);
+router.post("/create", protectRoute, createPost);
+router.delete("/:id", protectRoute, deletePost);
+router.post("/comment/:id", protectRoute, commentOnPost);
+router.post("/like/:id", protectRoute, likeUnLikePost);
+router.get("/following", protectRoute, getFollowingPosts);
+router.get("/user/:username", protectRoute, getUserPost); // Assuming you want to get posts by user ID
+
+/////////////////////////////
+
+router.post("/profile/:username", protectRoute, getUserProfile);
+router.get("/suggested", protectRoute, getSuggestedUsers);
+router.post("/follow/:id", protectRoute, followUnfollowUser);
+router.post("/update", protectRoute, updateUserProfile);

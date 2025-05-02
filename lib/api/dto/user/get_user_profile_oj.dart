@@ -1,10 +1,10 @@
-class GetUserProfile {
+class GetUserProfileObject {
   final String username;
 
-  GetUserProfile({required this.username});
+  GetUserProfileObject({required this.username});
 
-  factory GetUserProfile.fromJson(Map<String, dynamic> json) {
-    return GetUserProfile(
+  factory GetUserProfileObject.fromJson(Map<String, dynamic> json) {
+    return GetUserProfileObject(
       username: json['username'] ?? '',
     );
   }

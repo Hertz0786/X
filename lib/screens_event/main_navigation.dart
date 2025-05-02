@@ -3,8 +3,9 @@ import 'x_ui.dart';
 import 'notification/notification_screen.dart';
 import 'message/message_screen.dart';
 import 'post/compose_post_screen.dart';
-import 'search/saearch_screen.dart';
+import 'search/search_screen.dart';
 import 'login_page/first.dart';
+import 'user/profile_screen.dart';
 import 'package:kotlin/api/client/token_storage.dart';
 import 'package:kotlin/api/client/id_storage.dart';
 
@@ -24,8 +25,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     _screens = [
-      XUI(key: _xuiKey), // Home
-      const Offstage(), // Search (handled separately)
+      XUI(key: _xuiKey),
+      const SearchScreen(),
       const NotificationScreen(),
       const MessageScreen(),
     ];
@@ -53,13 +54,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  void _onSearchPressed() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const SearchScreen()),
-    );
-  }
-
   Future<void> _navigateToComposePostScreen() async {
     final result = await Navigator.push(
       context,
@@ -84,7 +78,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const Text("Trang Chính", style: TextStyle(color: Colors.white)),
+        automaticallyImplyLeading: false,
+        title: const Text("", style: TextStyle(color: Colors.white)),
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            );
+          },
+
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.exit_to_app, color: Colors.white),
@@ -107,9 +111,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         unselectedItemColor: Colors.grey,
         currentIndex: _currentIndex,
         onTap: (index) {
-          if (index == 1) {
-            _onSearchPressed();
-          } else if (index < _screens.length) {
+          if (index < _screens.length) {
             setState(() => _currentIndex = index);
           }
         },

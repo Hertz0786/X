@@ -37,7 +37,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
   try {
     final res = await apiClient.post<SignUpObject>(
-      "/api/login_page/signup",
+      "/api/auth/signup",
       fromJson: SignUpObject.fromJson,
       body: signupData.toJson(),
     );

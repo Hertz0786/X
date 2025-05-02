@@ -5,7 +5,10 @@ import 'package:kotlin/api/client/post/get_all_post_api.dart';
 import 'package:kotlin/api/client/post/like_unlike_post_api.dart';
 import 'package:kotlin/api/client/id_storage.dart';
 import 'package:kotlin/api/client/token_storage.dart';
+import 'package:kotlin/api/client/auth/auth_me_api.dart';
 import 'package:kotlin/api/dto/post/create_post_oj.dart';
+import 'package:kotlin/api/dto/auth/get_me_oj.dart';
+import 'FollowButton.dart';
 import 'post/post_detail_screen.dart';
 import 'user/profile_screen.dart';
 
@@ -21,6 +24,8 @@ class XUIState extends State<XUI> {
   List<CreatePostObject> posts = [];
   bool isLoading = true;
   String? currentUserId;
+  GetMeObject? currentUser;
+  List<String> followingIds = [];
 
   @override
   void initState() {
@@ -31,8 +36,11 @@ class XUIState extends State<XUI> {
 
   Future<void> loadCurrentUser() async {
     final id = await IdStorage.getUserId();
+    final user = await AuthMeApi(apiClient: ApiClient()).fetchCurrentUser();
     setState(() {
       currentUserId = id;
+      currentUser = user;
+      followingIds = user.following ?? [];
     });
   }
 
@@ -93,6 +101,20 @@ class XUIState extends State<XUI> {
     }
   }
 
+  bool _isFollowing(String userId) {
+    return followingIds.contains(userId);
+  }
+
+  void _updateFollowingList(String userId, bool isNowFollowing) {
+    setState(() {
+      if (isNowFollowing) {
+        followingIds.add(userId);
+      } else {
+        followingIds.remove(userId);
+      }
+    });
+  }
+
   String _formatDateTime(String dateTime) {
     final dt = DateTime.tryParse(dateTime);
     if (dt == null) return '';
@@ -124,17 +146,32 @@ class XUIState extends State<XUI> {
               MaterialPageRoute(builder: (context) => const ProfileScreen()),
             );
           },
-          child: const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              radius: 16,
+          child: Padding(
+            padding: const EdgeInsets.all(6.0),
+            child: currentUser?.profileImg != null && currentUser!.profileImg!.isNotEmpty
+                ? CircleAvatar(
+              radius: 22,
+              backgroundImage: NetworkImage(currentUser!.profileImg!),
+            )
+                : CircleAvatar(
+              radius: 22,
               backgroundColor: Colors.purple,
-              child: Text("H", style: TextStyle(color: Colors.white)),
+              child: Text(
+                (currentUser?.fullname ?? currentUser?.username ?? 'U')[0].toUpperCase(),
+                style: const TextStyle(color: Colors.white),
+              ),
             ),
           ),
         ),
         centerTitle: true,
-        title: const Icon(Icons.close),
+        title: const Text(
+          'X',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(40),
           child: Row(
@@ -192,11 +229,18 @@ class XUIState extends State<XUI> {
                             style: const TextStyle(color: Colors.white70),
                           ),
                         ),
-                        if (post.userId == currentUserId)
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.red),
-                            onPressed: () => _deletePost(post.id ?? ''),
-                          ),
+                        post.userId == currentUserId
+                            ? IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                          onPressed: () => _deletePost(post.id ?? ''),
+                        )
+                            : FollowButton(
+                          targetUserId: post.userId!,
+                          isInitiallyFollowing: _isFollowing(post.userId!),
+                          onChanged: (isNowFollowing) {
+                            _updateFollowingList(post.userId!, isNowFollowing);
+                          },
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),

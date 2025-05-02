@@ -1,9 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:kotlin/screens_event/compose_message_screnn.dart';
-import '../post/compose_post_screen.dart'; // Import màn hình soạn tin nhắn
+import '../post/compose_post_screen.dart';
+import '../user/profile_screen.dart';
+import 'package:kotlin/api/client/api_client.dart';
+import 'package:kotlin/api/client/auth/auth_me_api.dart';
+import 'package:kotlin/api/dto/auth/get_me_oj.dart';
 
-class MessageScreen extends StatelessWidget {
+class MessageScreen extends StatefulWidget {
   const MessageScreen({super.key});
+
+  @override
+  State<MessageScreen> createState() => _MessageScreenState();
+}
+
+class _MessageScreenState extends State<MessageScreen> {
+  GetMeObject? currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final user = await AuthMeApi(apiClient: ApiClient()).fetchCurrentUser();
+    setState(() {
+      currentUser = user;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,14 +36,32 @@ class MessageScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        leading: const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: Colors.purple,
-            child: Text('H'),
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: currentUser?.profileImg != null && currentUser!.profileImg!.isNotEmpty
+                ? CircleAvatar(
+              backgroundImage: NetworkImage(currentUser!.profileImg!),
+            )
+                : CircleAvatar(
+              backgroundColor: Colors.purple,
+              child: Text(
+                (currentUser?.fullname ?? currentUser?.username ?? 'U')[0].toUpperCase(),
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
           ),
         ),
-        title: const Text("Tin nhắn", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Tin nhắn",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 16.0),
@@ -44,7 +86,6 @@ class MessageScreen extends StatelessWidget {
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
-                // Mở màn hình soạn tin nhắn mới
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const ComposeMessageScreen()),

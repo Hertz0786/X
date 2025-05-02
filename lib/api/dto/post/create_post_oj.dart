@@ -12,6 +12,8 @@ class CreatePostObject {
   final String? createdAt;
   final List<dynamic>? likes;
   final List<CMObject> comments;
+  final String? profileImg;
+
 
   CreatePostObject({
     this.id,
@@ -24,6 +26,7 @@ class CreatePostObject {
     this.createdAt,
     this.likes,
     this.comments = const [],
+    this.profileImg,
   });
 
   factory CreatePostObject.fromJson(Map<String, dynamic> json) {
@@ -34,6 +37,7 @@ class CreatePostObject {
       text: json['text'],
       image: json['image'],
       token: json['token'],
+      profileImg: user is Map ? user['profileImg'] : null,
       userId: user is Map ? user['_id'] : user?.toString(),
       username: user is Map ? user['username'] : null,
       fullname: user is Map ? user['fullname'] : null,

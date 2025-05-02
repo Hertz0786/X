@@ -1,0 +1,7 @@
+cd D:\Coding\pbl
+npm run dev
+
+netstat -ano | findstr :5000
+
+taskkill /PID  /F
+

@@ -6,6 +6,7 @@ class GetMeObject {
   final String? bio;
   final String? profileImg;
   final String? coverImg;
+  final List<String> following; // 👈 thêm dòng này
 
   GetMeObject({
     required this.id,
@@ -15,6 +16,7 @@ class GetMeObject {
     this.bio,
     this.profileImg,
     this.coverImg,
+    this.following = const [], // 👈 khởi tạo mặc định
   });
 
   factory GetMeObject.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class GetMeObject {
       bio: json['bio'],
       profileImg: json['profileImg'],
       coverImg: json['coverImg'],
+      following: List<String>.from(json['following'] ?? []), // 👈 parse JSON
     );
   }
 }

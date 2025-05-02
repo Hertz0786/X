@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import '../user/profile_screen.dart';
+import 'package:kotlin/api/client/api_client.dart';
+import 'package:kotlin/api/client/auth/auth_me_api.dart';
+import 'package:kotlin/api/dto/auth/get_me_oj.dart';
+import 'package:kotlin/api/client/id_storage.dart';
+
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -10,6 +16,26 @@ class NotificationScreen extends StatefulWidget {
 class _NotificationScreenState extends State<NotificationScreen> {
   int selectedTab = 0;
   final List<String> tabs = ["Tất cả", "Đề cập", "Đã xác nhận"];
+  GetMeObject? currentUser;
+  String? currentUserId;
+  bool isLoading = true;
+
+
+
+  @override
+  void initState() {
+    super.initState();
+    loadCurrentUser();
+  }
+
+  Future<void> loadCurrentUser() async {
+    final id = await IdStorage.getUserId();
+    final user = await AuthMeApi(apiClient: ApiClient()).fetchCurrentUser();
+    setState(() {
+      currentUserId = id;
+      currentUser = user;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,14 +44,34 @@ class _NotificationScreenState extends State<NotificationScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        leading: const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: Colors.purple,
-            child: Text('H'),
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(6.0),
+            child: currentUser?.profileImg != null && currentUser!.profileImg!.isNotEmpty
+                ? CircleAvatar(
+              radius: 22,
+              backgroundImage: NetworkImage(currentUser!.profileImg!),
+            )
+                : CircleAvatar(
+              radius: 22,
+              backgroundColor: Colors.purple,
+              child: Text(
+                (currentUser?.fullname ?? currentUser?.username ?? 'U')[0].toUpperCase(),
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
           ),
         ),
-        title: const Text("Thông báo", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Thông báo",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 16.0),
