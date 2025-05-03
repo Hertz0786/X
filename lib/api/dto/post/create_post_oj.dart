@@ -1,10 +1,9 @@
 import "cm_oj.dart";
 
-
 class CreatePostObject {
   final String? id;
   final String? text;
-  final String? image; // ✅ base64 string with data:image/jpeg;base64,...
+  final String? image;
   final String? token;
   final String? userId;
   final String? username;
@@ -13,7 +12,6 @@ class CreatePostObject {
   final List<dynamic>? likes;
   final List<CMObject> comments;
   final String? profileImg;
-
 
   CreatePostObject({
     this.id,
@@ -54,4 +52,24 @@ class CreatePostObject {
     'image': image,
     'token': token,
   };
+
+  CreatePostObject copyWith({
+    String? username,
+    String? fullname,
+    String? profileImg,
+  }) {
+    return CreatePostObject(
+      id: id,
+      text: text,
+      image: image,
+      token: token,
+      userId: userId,
+      username: username ?? this.username,
+      fullname: fullname ?? this.fullname,
+      createdAt: createdAt,
+      likes: likes,
+      comments: comments,
+      profileImg: profileImg ?? this.profileImg,
+    );
+  }
 }

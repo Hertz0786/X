@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kotlin/api/client/api_client.dart';
 import 'package:kotlin/api/client/post/delete_post_api.dart';
 import 'package:kotlin/api/client/post/get_all_post_api.dart';
+import 'package:kotlin/api/client/post/get_fl_post_api.dart';
 import 'package:kotlin/api/client/post/like_unlike_post_api.dart';
 import 'package:kotlin/api/client/id_storage.dart';
 import 'package:kotlin/api/client/token_storage.dart';
@@ -20,41 +21,69 @@ class XUI extends StatefulWidget {
   State<XUI> createState() => XUIState();
 }
 
-class XUIState extends State<XUI> {
-  List<CreatePostObject> posts = [];
+class XUIState extends State<XUI> with TickerProviderStateMixin {
+  List<CreatePostObject> allPosts = [];
+  List<CreatePostObject> followingPosts = [];
   bool isLoading = true;
   String? currentUserId;
   GetMeObject? currentUser;
   List<String> followingIds = [];
+  late TabController tabController;
 
   @override
   void initState() {
     super.initState();
-    loadCurrentUser();
-    fetchPosts();
-  }
-
-  Future<void> loadCurrentUser() async {
-    final id = await IdStorage.getUserId();
-    final user = await AuthMeApi(apiClient: ApiClient()).fetchCurrentUser();
-    setState(() {
-      currentUserId = id;
-      currentUser = user;
-      followingIds = user.following ?? [];
+    tabController = TabController(length: 2, vsync: this);
+    loadData();
+    tabController.addListener(() {
+      if (tabController.indexIsChanging) return;
+      setState(() {
+        isLoading = true;
+      });
+      if (tabController.index == 0) {
+        fetchAllPosts();
+      } else {
+        fetchFollowingPosts();
+      }
     });
   }
 
-  Future<void> fetchPosts() async {
+  Future<void> loadData() async {
+    final id = await IdStorage.getUserId();
+    final user = await AuthMeApi(apiClient: ApiClient()).fetchCurrentUser();
+    currentUserId = id;
+    currentUser = user;
+    followingIds = user.following ?? [];
+    fetchAllPosts();
+  }
+
+  Future<void> fetchAllPosts() async {
     try {
-      final api = GetAllPostApi(apiClient: ApiClient());
-      final data = await api.fetchPosts();
+      final data = await GetAllPostApi(apiClient: ApiClient()).fetchPosts();
       setState(() {
-        posts = data;
+        allPosts = data;
         isLoading = false;
       });
     } catch (e) {
       setState(() => isLoading = false);
       print("Lỗi khi lấy bài viết: $e");
+    }
+  }
+
+  Future<void> fetchFollowingPosts() async {
+    try {
+      final token = await TokenStorage.getToken();
+      if (token == null) return;
+
+      final data = await GetFollowingPostsApi(apiClient: ApiClient())
+          .fetchFollowingPosts(token);
+      setState(() {
+        followingPosts = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+      print("Lỗi khi lấy bài viết đang theo dõi: $e");
     }
   }
 
@@ -78,7 +107,7 @@ class XUIState extends State<XUI> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Đã xoá bài viết")),
       );
-      await fetchPosts();
+      tabController.index == 0 ? fetchAllPosts() : fetchFollowingPosts();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Xoá thất bại: $e")),
@@ -86,7 +115,7 @@ class XUIState extends State<XUI> {
     }
   }
 
-  Future<void> _toggleLike(CreatePostObject post, int index) async {
+  Future<void> _toggleLike(CreatePostObject post, int index, bool isFollowTab) async {
     final token = await TokenStorage.getToken();
     if (token == null || post.id == null) return;
 
@@ -94,7 +123,19 @@ class XUIState extends State<XUI> {
       final updatedPost = await LikeUnlikePostApi(apiClient: ApiClient())
           .likeOrUnlikePost(postId: post.id!, token: token);
       setState(() {
-        posts[index] = updatedPost;
+        if (isFollowTab) {
+          followingPosts[index] = updatedPost.copyWith(
+            username: post.username,
+            fullname: post.fullname,
+            profileImg: post.profileImg,
+          );
+        } else {
+          allPosts[index] = updatedPost.copyWith(
+            username: post.username,
+            fullname: post.fullname,
+            profileImg: post.profileImg,
+          );
+        }
       });
     } catch (e) {
       print("Lỗi khi like/unlike: $e");
@@ -132,69 +173,21 @@ class XUIState extends State<XUI> {
     return post.likes?.contains(currentUserId) ?? false;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget _buildPostList(List<CreatePostObject> posts, bool isFollowTab) {
+    return RefreshIndicator(
+      color: Colors.white,
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        elevation: 0,
-        leading: GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(6.0),
-            child: currentUser?.profileImg != null && currentUser!.profileImg!.isNotEmpty
-                ? CircleAvatar(
-              radius: 22,
-              backgroundImage: NetworkImage(currentUser!.profileImg!),
-            )
-                : CircleAvatar(
-              radius: 22,
-              backgroundColor: Colors.purple,
-              child: Text(
-                (currentUser?.fullname ?? currentUser?.username ?? 'U')[0].toUpperCase(),
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-          ),
-        ),
-        centerTitle: true,
-        title: const Text(
-          'X',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(40),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () {},
-                  child: const Text("Dành cho bạn", style: TextStyle(color: Colors.white)),
-                ),
-              ),
-              Expanded(
-                child: TextButton(
-                  onPressed: () {},
-                  child: const Text("Đang theo dõi", style: TextStyle(color: Colors.grey)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      body: isLoading
+      onRefresh: () async {
+        if (isFollowTab) {
+          await fetchFollowingPosts();
+        } else {
+          await fetchAllPosts();
+        }
+      },
+      child: isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
         itemCount: posts.length,
         itemBuilder: (context, index) {
           final post = posts[index];
@@ -218,9 +211,11 @@ class XUIState extends State<XUI> {
                   children: [
                     Row(
                       children: [
-                        const CircleAvatar(
+                        CircleAvatar(
                           backgroundColor: Colors.white,
-                          backgroundImage: NetworkImage("https://cryptologos.cc/logos/uniswap-uniswap-logo.png"),
+                          backgroundImage: post.profileImg != null
+                              ? NetworkImage(post.profileImg!)
+                              : const NetworkImage("https://cryptologos.cc/logos/uniswap-uniswap-logo.png"),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -271,7 +266,7 @@ class XUIState extends State<XUI> {
                             isLiked ? Icons.favorite : Icons.favorite_border,
                             color: isLiked ? Colors.pinkAccent : Colors.white,
                           ),
-                          onPressed: () => _toggleLike(post, index),
+                          onPressed: () => _toggleLike(post, index, isFollowTab),
                         ),
                         Text(
                           "${post.likes?.length ?? 0} lượt thích",
@@ -285,6 +280,69 @@ class XUIState extends State<XUI> {
             ),
           );
         },
+      ),
+    );
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          elevation: 0,
+          leading: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: currentUser?.profileImg != null && currentUser!.profileImg!.isNotEmpty
+                  ? CircleAvatar(
+                radius: 22,
+                backgroundImage: NetworkImage(currentUser!.profileImg!),
+              )
+                  : CircleAvatar(
+                radius: 22,
+                backgroundColor: Colors.purple,
+                child: Text(
+                  (currentUser?.fullname ?? currentUser?.username ?? 'U')[0].toUpperCase(),
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+          centerTitle: true,
+          title: const Text(
+            'X',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          bottom: TabBar(
+            controller: tabController,
+            indicatorColor: Colors.white,
+            tabs: const [
+              Tab(text: 'Dành cho bạn'),
+              Tab(text: 'Đang theo dõi'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          controller: tabController,
+          children: [
+            _buildPostList(allPosts, false),
+            _buildPostList(followingPosts, true),
+          ],
+        ),
       ),
     );
   }

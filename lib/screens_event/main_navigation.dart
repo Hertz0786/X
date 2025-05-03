@@ -62,11 +62,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
     if (result == true) {
       if (_currentIndex == 0) {
-        _xuiKey.currentState?.fetchPosts();
+        _xuiKey.currentState?.fetchAllPosts();
       } else {
         setState(() => _currentIndex = 0);
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _xuiKey.currentState?.fetchPosts();
+          _xuiKey.currentState?.fetchAllPosts();
         });
       }
     }
