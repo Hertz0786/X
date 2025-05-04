@@ -1,13 +1,16 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-typedef FromJson<T> = T Function(Map<String, dynamic> json);
+/// Định nghĩa kiểu hàm để chuyển đổi JSON thành đối tượng Dart.
+/// Có thể là Map hoặc List tùy thuộc vào phản hồi từ API.
+typedef FromJson<T> = T Function(dynamic json);
 
 class ApiClient {
   final String baseUrl = "http://10.0.2.2:5000";
 
   ApiClient();
 
+  /// Phương thức GET chung cho tất cả các API.
   Future<T> get<T>(
       String path, {
         required FromJson<T> fromJson,
@@ -24,10 +27,11 @@ class ApiClient {
       final data = jsonDecode(response.body);
       return fromJson(data);
     } else {
-      throw Exception('GET thất bại: ${response.body}');
+      throw Exception('GET thất bại: ${response.statusCode} - ${response.body}');
     }
   }
 
+  /// Phương thức POST chung cho tất cả các API.
   Future<T> post<T>(
       String path, {
         required dynamic body,
@@ -49,10 +53,11 @@ class ApiClient {
       final data = jsonDecode(response.body);
       return fromJson(data);
     } else {
-      throw Exception('POST thất bại: ${response.body}');
+      throw Exception('POST thất bại: ${response.statusCode} - ${response.body}');
     }
   }
 
+  /// Phương thức DELETE chung cho tất cả các API.
   Future<void> delete(String path, {String? token}) async {
     final headers = {
       'Content-Type': 'application/json',
@@ -65,8 +70,7 @@ class ApiClient {
     );
 
     if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('DELETE thất bại: ${response.body}');
+      throw Exception('DELETE thất bại: ${response.statusCode} - ${response.body}');
     }
   }
-
 }
