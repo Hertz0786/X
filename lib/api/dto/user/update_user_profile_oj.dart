@@ -1,4 +1,4 @@
-class UpdateUserProfile {
+class UserProfileUpdateRequest {
   final String? fullname;
   final String? bio;
   final String? link;
@@ -6,11 +6,10 @@ class UpdateUserProfile {
   final String? username;
   final String? currentPassword;
   final String? newPassword;
-  final String? profileImg; // base64 hoặc link tạm
-  final String? coverImg;   // base64 hoặc link tạm
-  final String token; // Thêm token vào
+  final String? profileImg; // base64 hoặc link ảnh tạm
+  final String? coverImg;   // base64 hoặc link ảnh tạm
 
-  UpdateUserProfile({
+  UserProfileUpdateRequest({
     this.fullname,
     this.bio,
     this.link,
@@ -20,36 +19,17 @@ class UpdateUserProfile {
     this.newPassword,
     this.profileImg,
     this.coverImg,
-    required this.token, // Yêu cầu token khi khởi tạo
   });
 
-  Map<String, dynamic> toJson() {
-    return {
-      'fullname': fullname,
-      'bio': bio,
-      'link': link,
-      'email': email,
-      'username': username,
-      'currentPassword': currentPassword,
-      'newPassword': newPassword,
-      'profileImg': profileImg,
-      'coverImg': coverImg,
-      'token': token, // Thêm token vào body
-    };
-  }
-
-  factory UpdateUserProfile.fromJson(Map<String, dynamic> json) {
-    return UpdateUserProfile(
-      fullname: json['fullname'],
-      bio: json['bio'],
-      link: json['link'],
-      email: json['email'],
-      username: json['username'],
-      currentPassword: json['currentPassword'],
-      newPassword: json['newPassword'],
-      profileImg: json['profileImg'],
-      coverImg: json['coverImg'],
-      token: json['token'],
-    );
-  }
+  Map<String, dynamic> toJson() => {
+    if (fullname != null) 'fullname': fullname,
+    if (bio != null) 'bio': bio,
+    if (link != null) 'link': link,
+    if (email != null) 'email': email,
+    if (username != null) 'username': username,
+    if (currentPassword != null) 'currentPassword': currentPassword,
+    if (newPassword != null) 'newPassword': newPassword,
+    if (profileImg != null) 'profileImg': profileImg,
+    if (coverImg != null) 'coverImg': coverImg,
+  };
 }

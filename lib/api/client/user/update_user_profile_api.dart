@@ -1,19 +1,26 @@
 import 'package:kotlin/api/client/api_client.dart';
+import  'package:kotlin/api/client/token_storage.dart';
 import 'package:kotlin/api/dto/user/update_user_profile_oj.dart';
 
-class UpdateUserProfileApi {
-  final ApiClient apiClient;
+class UserRepository {
+  final ApiClient _apiClient = ApiClient();
 
-  UpdateUserProfileApi({required this.apiClient});
-
-  Future<void> updateProfile(UpdateUserProfile profileData) async {
-    final token = profileData.token;
-
-    await apiClient.post<void>(
-      '/api/users/update', // endpoint backend đang dùng
-      body: profileData.toJson(),
-      fromJson: (_) => null, // Không cần dữ liệu trả về
-      token: token,
-    );
+  Future<Map<String, dynamic>> updateUserProfile(
+      UserProfileUpdateRequest request, {
+        required String? token,
+      }) async {
+    try {
+      final result = await _apiClient.post<Map<String, dynamic>>(
+        '/api/users/update',
+        body: request.toJson(),
+        fromJson: (json) => json as Map<String, dynamic>,
+        token: token,
+      );
+      print("✅ API call succeeded: $result");
+      return result;
+    } catch (e) {
+      print("❌ API call failed in UserRepository: $e");
+      rethrow;
+    }
   }
 }

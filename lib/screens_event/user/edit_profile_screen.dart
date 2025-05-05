@@ -1,10 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'dart:convert'; // For base64 encoding
 import 'package:kotlin/api/client/api_client.dart';
 import 'package:kotlin/api/client/auth/auth_me_api.dart';
-import 'package:kotlin/api/dto/auth/get_me_oj.dart';
+import 'package:kotlin/api/dto/user/update_user_profile_oj.dart';
+import 'package:kotlin/api/client/user/update_user_profile_api.dart';
+import 'package:kotlin/api/client/token_storage.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -16,7 +18,7 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController(); // Temporary TextField
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
 
   File? _avatarImage;
@@ -38,7 +40,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final bytes = await File(pickedImage.path).readAsBytes();
       setState(() {
         _avatarImage = File(pickedImage.path);
-        _avatarBase64 = base64Encode(bytes);
+        _avatarBase64 = 'data:image/jpeg;base64,' + base64Encode(bytes); // ✅ Thêm tiền tố
         _avatarUrl = null;
       });
     }
@@ -50,7 +52,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final bytes = await File(pickedImage.path).readAsBytes();
       setState(() {
         _coverImage = File(pickedImage.path);
-        _coverBase64 = base64Encode(bytes);
+        _coverBase64 = 'data:image/jpeg;base64,' + base64Encode(bytes); // ✅ Thêm tiền tố
         _coverUrl = null;
       });
     }
@@ -72,23 +74,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
+    print("🔄 Save button pressed");
+
     try {
-      final Map<String, dynamic> updatedData = {
-        'fullname': _nameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'phone': _phoneController.text.trim(),
-        'bio': _bioController.text.trim(),
-        'profileImg': _avatarBase64,
-        'coverImg': _coverBase64,
-      };
+      final token = await TokenStorage.getToken();
+      print("📦 Token: $token");
 
-      // TODO: Implement the API call to update the user profile with updatedData
+      final request = UserProfileUpdateRequest(
+        fullname: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        bio: _bioController.text.trim(),
+        profileImg: _avatarBase64,
+        coverImg: _coverBase64,
+      );
 
-      print("Profile updated successfully.");
-    } catch (e) {
-      print("Error saving profile: $e");
+      print("📤 Sending data: ${request.toJson()}");
+
+      final response = await UserRepository().updateUserProfile(request, token: token);
+
+      print("✅ Server Response:");
+      print("🟢 Message: ${response['message']}");
+      print("👤 User: ${response['user']}");
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response['message'] ?? 'Updated successfully')),
+        );
+      }
+    } catch (e, stackTrace) {
+      print("❌ Error saving profile: $e");
+      print("🪵 StackTrace: $stackTrace");
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Failed to update profile: $e')),
+        );
+      }
     }
   }
+
 
   @override
   void initState() {
@@ -121,7 +145,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cover Image
             GestureDetector(
               onTap: _pickCoverImage,
               child: _coverImage != null
@@ -135,7 +158,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               )),
             ),
             const SizedBox(height: 16),
-            // Avatar
             Center(
               child: GestureDetector(
                 onTap: _pickAvatar,

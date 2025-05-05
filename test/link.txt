@@ -3,6 +3,8 @@ app.use("/api/users", userRouters);
 app.use("/api/posts", postRouters);
 app.use("/api/notifications", notificationRouters);
 app.use("/api/messages", messageRouters);
+app.use("/api/search", searchRouters);
+
 //////////////////////////
 
 router.post("/me", protectRoute, getMe); // dmm quy
@@ -24,11 +26,18 @@ router.delete("/:id", protectRoute, deletePost);
 router.post("/comment/:id", protectRoute, commentOnPost);
 router.post("/like/:id", protectRoute, likeUnLikePost);
 router.get("/following", protectRoute, getFollowingPosts);
-router.get("/user/:username", protectRoute, getUserPost); // Assuming you want to get posts by user ID
+router.get("/user/:username", protectRoute, getUserPost); // Assuming you want to get posts by user ID////////////////////////////
 
 /////////////////////////////
 
 router.post("/profile/:username", protectRoute, getUserProfile);
 router.get("/suggested", protectRoute, getSuggestedUsers);
-router.post("/follow/:id", protectRoute, followUnfollowUser);
+router.post("/follow/:id", protectRoute, followUnfollowUser);/////////////////////////
 router.post("/update", protectRoute, updateUserProfile);
+
+////////////////////////////////
+
+router.get('/users', protectRoute, searchUsers);
+router.get('/posts', protectRoute, searchPosts);
+
+
