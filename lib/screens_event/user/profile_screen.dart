@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:kotlin/api/client/api_client.dart';
 import 'package:kotlin/api/dto/auth/get_me_oj.dart';
 import 'package:kotlin/api/client/auth/auth_me_api.dart';
+import 'package:kotlin/api/client/user/get_user.dart'; // Import GetUser để dùng fetchProfileById
+import 'package:kotlin/api/client/id_storage.dart'; // Import IdStorage để lấy userId
 import 'edit_profile_screen.dart';
 import 'liked_post_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final String userId; // Tham số userId để xác định xem người dùng đang xem profile của ai
+
+  const ProfileScreen({super.key, required this.userId}); // Nhận userId từ màn hình gọi
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -15,21 +19,43 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   GetMeObject? user;
   bool isLoading = true;
+  String? currentUserId; // Thêm biến để lưu currentUserId
 
   @override
   void initState() {
     super.initState();
+    _loadCurrentUserId(); // Gọi hàm để lấy currentUserId
     fetchUserInfo();
   }
 
+  // Lấy currentUserId từ IdStorage
+  Future<void> _loadCurrentUserId() async {
+    final id = await IdStorage.getUserId();  // Lấy userId từ SharedPreferences
+    setState(() {
+      currentUserId = id;
+    });
+  }
+
+  // Lấy thông tin người dùng: nếu là profile của chính mình, dùng AuthMeApi, nếu là của người khác, dùng GetUser
   Future<void> fetchUserInfo() async {
     try {
-      final api = AuthMeApi(apiClient: ApiClient());
-      final me = await api.fetchCurrentUser();
-      setState(() {
-        user = me;
-        isLoading = false;
-      });
+      if (widget.userId == currentUserId) {
+        // Nếu userId là của chính mình, dùng AuthMeApi
+        final api = AuthMeApi(apiClient: ApiClient());
+        final me = await api.fetchCurrentUser();
+        setState(() {
+          user = me;
+          isLoading = false;
+        });
+      } else {
+        // Nếu userId là của người khác, dùng GetUser
+        final api = GetUser(apiClient: ApiClient());
+        final otherUser = await api.fetchProfileById(widget.userId);
+        setState(() {
+          user = otherUser;
+          isLoading = false;
+        });
+      }
     } catch (e) {
       print("Lỗi khi load user: $e");
       setState(() => isLoading = false);
@@ -63,8 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ? NetworkImage(user!.profileImg!)
                   : null,
               child: (user!.profileImg == null || user!.profileImg!.isEmpty)
-                  ? Text(user!.username[0].toUpperCase(),
-                  style: const TextStyle(color: Colors.white, fontSize: 30))
+                  ? Text(user!.username[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 30))
                   : null,
             ),
             const SizedBox(height: 16),
@@ -77,8 +102,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildStat("Bài viết", 0), // có thể fetch count thật sau
-                _buildStat("Đã thích", 0),
+                _buildStat("Bài viết", 0), // Giả sử số lượng bài viết
+                _buildStat("Đã thích", 0),  // Giả sử số bài viết đã thích
               ],
             ),
             const SizedBox(height: 30),
@@ -101,33 +126,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => const EditProfileScreen()));
-              },
-              icon: const Icon(Icons.edit, color: Colors.white),
-              label: const Text("Chỉnh sửa hồ sơ", style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            // Chỉ hiển thị nút "Chỉnh sửa hồ sơ" và "Bài viết đã thích" nếu đang xem hồ sơ của chính mình
+            if (widget.userId == currentUserId) ...[
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => const EditProfileScreen()));
+                },
+                icon: const Icon(Icons.edit, color: Colors.white),
+                label: const Text("Chỉnh sửa hồ sơ", style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => const LikedPostsScreen()));
-              },
-              icon: const Icon(Icons.favorite, color: Colors.white),
-              label: const Text("Bài viết đã thích", style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pinkAccent,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => const LikedPostsScreen()));
+                },
+                icon: const Icon(Icons.favorite, color: Colors.white),
+                label: const Text("Bài viết đã thích", style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pinkAccent,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

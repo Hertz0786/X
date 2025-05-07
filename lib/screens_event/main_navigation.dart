@@ -81,13 +81,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         automaticallyImplyLeading: false,
         title: const Text("", style: TextStyle(color: Colors.white)),
         leading: GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            );
+          onTap: () async {
+            // Lấy userId từ IdStorage
+            final userId = await IdStorage.getUserId();
+            if (userId != null) {
+              // Truyền userId vào ProfileScreen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfileScreen(userId: userId),  // Truyền userId vào ProfileScreen
+                ),
+              );
+            }
           },
-
         ),
         actions: [
           IconButton(

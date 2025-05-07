@@ -7,6 +7,8 @@ import 'package:kotlin/api/client/search/search_api.dart';
 import 'package:kotlin/api/dto/search/post_search_oj.dart';
 import 'package:kotlin/api/dto/search/user_search_oj.dart';
 import 'package:kotlin/api/dto/auth/get_me_oj.dart';
+import 'package:kotlin/api/client/user/get_user_profile_api.dart';
+import 'package:kotlin/api/client/user/get_user.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -52,6 +54,9 @@ class _SearchScreenState extends State<SearchScreen> {
         setState(() {
           postResults = posts.where((post) => post.id != currentUserId).toList();
         });
+
+        // Sau khi tìm kiếm xong bài viết, lấy tên tác giả cho tất cả bài viết
+        await _fetchAuthorsForPosts(postResults);
       } else {
         final users = await UserApi().searchUsers(query);
         setState(() {
@@ -63,6 +68,15 @@ class _SearchScreenState extends State<SearchScreen> {
     } finally {
       setState(() => isLoading = false);
     }
+  }
+
+  // Hàm để gọi API lấy tên tác giả cho tất cả bài viết trong postResults
+  Future<void> _fetchAuthorsForPosts(List<PostSearchResult> posts) async {
+    final getUser = GetUser(apiClient: ApiClient());
+    for (var post in posts) {
+      await post.fetchAuthorName(getUser);
+    }
+    setState(() {});
   }
 
   Widget _buildTabs() {
@@ -96,6 +110,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     if (selectedTab == 0) {
       if (postResults.isEmpty) return const Text("Không có bài viết", style: TextStyle(color: Colors.grey));
+
       return Expanded(
         child: ListView.separated(
           itemCount: postResults.length,
@@ -115,19 +130,20 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     } else {
       if (userResults.isEmpty) return const Text("Không có người dùng", style: TextStyle(color: Colors.grey));
+
       return Expanded(
         child: ListView.separated(
-          itemCount: userResults.length,
+          itemCount: userResults.length,  // Changed this to userResults
           separatorBuilder: (_, __) => const Divider(color: Colors.white10),
           itemBuilder: (context, index) {
-            final user = userResults[index];
+            final user = userResults[index];  // Changed this to userResults
             return ListTile(
               contentPadding: EdgeInsets.zero,
               leading: user.profileImg != null
-                  ? CircleAvatar(backgroundImage: NetworkImage(user.profileImg!))
-                  : const CircleAvatar(child: Icon(Icons.person)),
+                  ? Image.network(user.profileImg!, width: 50, height: 50, fit: BoxFit.cover)
+                  : const Icon(Icons.account_circle, color: Colors.white),
               title: Text(user.fullname, style: const TextStyle(color: Colors.white)),
-              subtitle: Text(user.username ?? '', style: const TextStyle(color: Colors.grey)),
+              subtitle: Text(user.username ?? 'Không có tên người dùng', style: const TextStyle(color: Colors.grey)),
             );
           },
         ),
@@ -143,7 +159,7 @@ class _SearchScreenState extends State<SearchScreen> {
         backgroundColor: Colors.black,
         automaticallyImplyLeading: false,
         leading: GestureDetector(
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(userId: currentUserId!))),
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: currentUser?.profileImg != null

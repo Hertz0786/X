@@ -1,4 +1,4 @@
-cd D:\Coding\pbl
+cd D:\Coding\ppbl\X
 npm run dev
 
 netstat -ano | findstr :5000

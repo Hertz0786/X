@@ -101,7 +101,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
         backgroundColor: Colors.black,
         elevation: 0,
         leading: GestureDetector(
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+          onTap: () {
+            if (currentUserId != null) {
+              // Truyền userId vào ProfileScreen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileScreen(userId: currentUserId!),
+                ),
+              );
+            }
+          },
           child: Padding(
             padding: const EdgeInsets.all(6.0),
             child: currentUser?.profileImg != null && currentUser!.profileImg!.isNotEmpty
@@ -228,7 +238,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       ),
                     ),
                   );
-
                 },
               ),
             ),

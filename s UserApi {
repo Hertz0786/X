@@ -1,0 +1,145 @@
+[33mcommit ea6b9536f92868d73b7e597230baa92b8ac6ddcb[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Mon May 5 15:53:20 2025 +0700
+
+     done search done noti done mess /// - background - get user - deploy
+
+[33mcommit ecb8e2215154710593af5aed08df7fb0646aa2bd[m[33m ([m[1;31morigin/main[m[33m)[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Sun May 4 22:28:14 2025 +0700
+
+    loi win
+
+[33mcommit de8e153ca97633e76af6a468c6599bd2f42c2f56[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Sat May 3 14:22:52 2025 +0700
+
+    backup
+
+[33mcommit 464b54274b3ae4b9faa140a4905860df898db4b2[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Fri May 2 09:13:45 2025 +0700
+
+     follow / ui / get profile / get avatar /
+
+[33mcommit d4367fc94e248ee03c129b702a26dda4fedb66bd[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Thu Apr 24 11:12:05 2025 +0700
+
+     lay user trong bai post - get me profile / thieu update / cap nhat dang bai bang hinh anh /
+
+[33mcommit 7c527ae29fe5ce04c47bb9b171474dc26b25c407[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Wed Apr 23 22:58:16 2025 +0700
+
+     done get me
+
+[33mcommit 1c2dcf8fefe4b451709b3742682b4c195f4af145[m
+Merge: 99e3edf a539180
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Wed Apr 23 22:05:15 2025 +0700
+
+    Merge branch 'dev-token'
+
+[33mcommit 99e3edf5d3bd9b9b5da07f0bfde5676faec6bf2d[m
+Merge: c53ad99 d13baeb
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Wed Apr 23 22:04:17 2025 +0700
+
+    Resolve merge conflict in README.md
+
+[33mcommit a5391801f41870a27c1e016af7efe8d5b951dc40[m[33m ([m[1;32mdev-token[m[33m)[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Wed Apr 23 22:00:21 2025 +0700
+
+    done like - get like
+
+[33mcommit b19f2427b40d9e8a2f957061f652bb40becf10f4[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Wed Apr 23 01:07:52 2025 +0700
+
+     done xoa post
+
+[33mcommit 2a33b43e62b631defedeb234a43895463b21003b[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Tue Apr 22 22:40:20 2025 +0700
+
+     done comment
+
+[33mcommit 5e297eddeed57b9a6678143b5d381035ba08bb59[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Tue Apr 22 22:00:06 2025 +0700
+
+    dang bai thanh cong
+
+[33mcommit d13baebcdfc5232c93e75c6014081cebf9907eb2[m[33m ([m[1;31morigin/full_ui[m[33m, [m[1;32mtemp-dev-token[m[33m)[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Tue Apr 22 17:11:17 2025 +0700
+
+    22/4
+
+[33mcommit b6ae8b3afc52d5fad83edb4626c891d4d90469bc[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Mon Apr 21 00:23:08 2025 +0700
+
+    thieu id comment
+
+[33mcommit 14c80ebba2cbc654bbb48434af40c4e5e149ef69[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Sun Apr 20 23:44:14 2025 +0700
+
+    done get all post
+
+[33mcommit 9559171e02507b37b774de78fed8adb86af9d338[m[33m ([m[1;31morigin/backup-main[m[33m, [m[1;32mbackup-main[m[33m)[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Sun Apr 20 22:44:12 2025 +0700
+
+    create post
+
+[33mcommit 81ff297032577520e56b7f9c7c0826b3471af792[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Sun Apr 20 22:40:47 2025 +0700
+
+    create post
+
+[33mcommit 0118e7bd4d6207af8a833dccd080054198c79b21[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Sun Apr 20 00:59:18 2025 +0700
+
+    save token
+
+[33mcommit ea323690697a62cf4da59406ab1023f9895fc8eb[m
+Author: Chessy <ilovepakpak@gmail.com>
+Date:   Wed Apr 16 22:36:21 2025 +0700
+
+    refactor
+
+[33mcommit 3cb8337d0d3b2b7bd262873b67eddfd294b84633[m
+Author: Chessy <ilovepakpak@gmail.com>
+Date:   Tue Apr 15 23:55:25 2025 +0700
+
+    feat
+
+[33mcommit 5611dd1d78f13ba02ce82f5808c5d8a363f59baf[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Sat Apr 12 21:07:45 2025 +0700
+
+    them giao dien
+
+[33mcommit 845ceee8838498e83da3dbd361aa46c7c349af54[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Sat Apr 12 20:36:55 2025 +0700
+
+    capnhatui
+
+[33mcommit 6607ce87e635a5cd2a781d4582fca7dfce4d008d[m
+Author: unknown <nhanhieu0401@gmail.com>
+Date:   Sat Apr 12 00:27:20 2025 +0700
+
+    1th
+
+[33mcommit c53ad995cd73fc9deb8675400b84974e92aff52a[m
+Author: Hertz0786 <164466479+Hertz0786@users.noreply.github.com>
+Date:   Sat Apr 12 00:25:26 2025 +0700
+
+    Initial commit

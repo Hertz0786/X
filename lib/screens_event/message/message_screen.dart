@@ -53,7 +53,15 @@ class _MessageScreenState extends State<MessageScreen> {
         elevation: 0,
         leading: GestureDetector(
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+            // Truyền currentUserId vào ProfileScreen khi nhấn vào avatar
+            if (currentUser != null && currentUser!.id != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileScreen(userId: currentUser!.id!), // Truyền userId vào ProfileScreen
+                ),
+              );
+            }
           },
           child: Padding(
             padding: const EdgeInsets.all(8.0),

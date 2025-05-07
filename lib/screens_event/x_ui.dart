@@ -12,6 +12,7 @@ import 'package:kotlin/api/dto/auth/get_me_oj.dart';
 import 'FollowButton.dart';
 import 'post/post_detail_screen.dart';
 import 'user/profile_screen.dart';
+import 'package:kotlin/api/client/user/get_user.dart';
 
 class XUI extends StatefulWidget {
   const XUI({super.key});
@@ -211,11 +212,28 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
                   children: [
                     Row(
                       children: [
-                        CircleAvatar(
-                          backgroundColor: Colors.white,
-                          backgroundImage: post.profileImg != null
-                              ? NetworkImage(post.profileImg!)
-                              : const NetworkImage("https://cryptologos.cc/logos/uniswap-uniswap-logo.png"),
+                        GestureDetector(
+                          onTap: () async {
+                            // Khi nhấn vào avatar, gọi API GetUser để lấy thông tin người dùng
+                            try {
+                              final user = await GetUser(apiClient: ApiClient())
+                                  .fetchProfileById(post.userId!); // Lấy thông tin người dùng
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProfileScreen(userId: post.userId!),  // Truyền userId vào ProfileScreen
+                                ),
+                              );
+                            } catch (e) {
+                              print("Lỗi khi lấy thông tin người dùng: $e");
+                            }
+                          },
+                          child: CircleAvatar(
+                            backgroundColor: Colors.white,
+                            backgroundImage: post.profileImg != null
+                                ? NetworkImage(post.profileImg!)
+                                : const NetworkImage("https://cryptologos.cc/logos/uniswap-uniswap-logo.png"),
+                          ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -296,9 +314,12 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
           elevation: 0,
           leading: GestureDetector(
             onTap: () {
+              // Đảm bảo truyền userId vào ProfileScreen
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                MaterialPageRoute(
+                  builder: (context) => ProfileScreen(userId: currentUserId!), // Truyền userId vào ProfileScreen
+                ),
               );
             },
             child: Padding(
@@ -336,6 +357,7 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
             ],
           ),
         ),
+
         body: TabBarView(
           controller: tabController,
           children: [

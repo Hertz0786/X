@@ -11,7 +11,7 @@ class GetFollowingPostsApi {
       '/api/posts/following',
       token: token,
       fromJson: (json) {
-        final postsJson = json as List;
+        final postsJson = json['posts'] as List;
         return postsJson.map((e) => CreatePostObject.fromJson(e)).toList();
       },
     );

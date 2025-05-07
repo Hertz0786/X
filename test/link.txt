@@ -5,14 +5,14 @@ app.use("/api/notifications", notificationRouters);
 app.use("/api/messages", messageRouters);
 app.use("/api/search", searchRouters);
 
-//////////////////////////
+//////////////////////////   done 
 
 router.post("/me", protectRoute, getMe); // dmm quy
 router.post("/signup", signup);
 router.post("/login", login);
 router.post("/logout", logout);
 
-/////////////////////////
+/////////////////////////  done 
 
 router.get("/", protectRoute, getNotifications);
 router.delete("/", protectRoute, deleteNotifications);
