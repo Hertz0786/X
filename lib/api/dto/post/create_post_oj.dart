@@ -1,4 +1,4 @@
-import "cm_oj.dart";
+import 'cm_oj.dart';
 
 class CreatePostObject {
   final String? id;
@@ -9,7 +9,7 @@ class CreatePostObject {
   final String? username;
   final String? fullname;
   final String? createdAt;
-  final List<dynamic>? likes;
+  final List<String>? likes;
   final List<CMObject> comments;
   final String? profileImg;
 
@@ -28,19 +28,32 @@ class CreatePostObject {
   });
 
   factory CreatePostObject.fromJson(Map<String, dynamic> json) {
-    final user = json['user'];
+    final dynamic user = json['user'];
+    String? userId;
+    String? username;
+    String? fullname;
+    String? profileImg;
+
+    if (user is Map<String, dynamic>) {
+      userId = user['_id'];
+      username = user['username'];
+      fullname = user['fullname'];
+      profileImg = user['profileImg'];
+    } else if (user is String) {
+      userId = user;
+    }
 
     return CreatePostObject(
       id: json['_id'],
       text: json['text'],
       image: json['image'],
       token: json['token'],
-      profileImg: user is Map ? user['profileImg'] : null,
-      userId: user is Map ? user['_id'] : user?.toString(),
-      username: user is Map ? user['username'] : null,
-      fullname: user is Map ? user['fullname'] : null,
+      userId: userId,
+      username: username,
+      fullname: fullname,
+      profileImg: profileImg,
       createdAt: json['createdAt'],
-      likes: json['likes'] as List? ?? [],
+      likes: (json['likes'] as List?)?.cast<String>(),
       comments: (json['comments'] as List? ?? [])
           .map((e) => CMObject.fromJson(e))
           .toList(),

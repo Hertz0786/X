@@ -2,29 +2,64 @@ const Post = require("../models/post.model");
 const User = require("../models/user.model");
 const cloudinary = require("cloudinary").v2;
 const Notification = require("../models/notification.model");
+const { moderatePostContent , moderateCommentContent } = require('../moderation/moderation.service');
+
+
+
+
+const getPostById = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const post = await Post.findById(postId).populate('author', 'username profileImg');
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    res.status(200).json({
+      post
+    });
+  } catch (error) {
+    console.error("❌ Error fetching post:", error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
 
 const createPost = async (req, res) => {
   try {
     const { text } = req.body;
     let { image } = req.body;
-    const {userId} = req.user;
+    const { userId } = req.user;
     const user = await User.findById(userId);
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    if (user.isBlocked) {
+      return res.status(403).json({ message: "You are blocked. You cannot post." });
+    }
+
     if (!text && !image) {
       return res.status(400).json({ message: "Please provide text or image" });
     }
+
     if (image) {
       const uploadedResponse = await cloudinary.uploader.upload(image);
       image = uploadedResponse.secure_url;
     }
+
     const newPost = await Post.create({
       user: userId,
       text,
       image,
     });
+
     await newPost.save();
+
+    // ✅ GỌI KIỂM DUYỆT SAU KHI ĐĂNG
+    // await moderatePostContent(newPost);
+
     res.status(201).json({
       message: "Post created successfully",
       post: newPost,
@@ -34,6 +69,7 @@ const createPost = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 const deletePost = async (req, res) => {
   try {
@@ -61,12 +97,23 @@ const deletePost = async (req, res) => {
 
 const commentOnPost = async (req, res) => {
   try {
-    const { id } = req.params; // Post ID
+    const { id } = req.params;
     const { text } = req.body;
     const { userId } = req.user;
+
     if (!text) {
       return res.status(400).json({ message: "Please provide text" });
     }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.isBlocked) {
+      return res.status(403).json({ message: "You are blocked. You cannot comment." });
+    }
+
     const post = await Post.findById(id);
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
@@ -76,10 +123,17 @@ const commentOnPost = async (req, res) => {
       user: userId,
       text,
     };
+
+    // ⚠️ Kiểm duyệt comment
+    const isFlagged = await moderateCommentContent(comment, post._id);
+
     post.comments.push(comment);
     await post.save();
+
     res.status(200).json({
-      message: "Comment added successfully",
+      message: isFlagged
+        ? "Comment added, but flagged for moderation"
+        : "Comment added successfully",
       post,
     });
   } catch (error) {
@@ -128,20 +182,27 @@ const likeUnLikePost = async (req, res) => {
 
 const getAllPost = async (req, res) => {
   try {
+    const isAdmin = req.user?.role === 'admin'; // Cần middleware set req.user
 
-    const posts = await Post.find()
+    const query = isAdmin ? {} : { isHidden: false };
+
+    const posts = await Post.find(query)
       .sort({ createdAt: -1 })
       .populate({ path: "user", select: "-password" })
       .populate({ path: "comments.user", select: "-password" });
+
     if (posts.length === 0) {
-      return res.status(200).json({ message: "No posts found", post: [] });
+      return res.status(200).json({ message: "No posts found", posts: [] });
     }
+
     res.status(200).json({ posts });
+
   } catch (error) {
-    console.error(error);
+    console.error("Error in getAllPost:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 const getLikedPosts = async (req, res) => {
   const {userId} = req.user;
@@ -154,8 +215,9 @@ const getLikedPosts = async (req, res) => {
       .populate({ path: "user", select: "-password" })
       .populate({ path: "comments.user", select: "-password" });
 
-      res.status(200).json({ posts: likedPosts });
-    } catch (error) {
+
+    res.status(200).json({posts: likedPosts});
+  } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
@@ -174,7 +236,7 @@ const getFollowingPosts = async (req, res) => {
       .populate({ path: "user", select: "-password" })
       .populate({ path: "comments.user", select: "-password" });
 
-      res.status(200).json(posts);
+      res.status(200).json({posts});
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
@@ -193,14 +255,157 @@ const getUserPost = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({ path: "user", select: "-password" })
       .populate({ path: "comments.user", select: "-password" });
-
-    res.status(200).json(posts);
+    res.status(200).json({posts});
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
-
 }
+
+const reportPost = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const { userId } = req.user;
+
+    const postId = req.params.postId.trim();
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    const isAlreadyReported = post.reports.some(report => report.user.toString() === userId);
+    if (isAlreadyReported) {
+      return res.status(400).json({ message: "You have already reported this post" });
+    }
+
+    post.reports.push({ user: userId, reason });
+    await post.save();
+
+    res.status(200).json({
+      message: "Post reported successfully",
+      post,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const editComment = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const { text } = req.body;
+    const userId = req.user._id;
+
+    if (!text) {
+      return res.status(400).json({ message: 'Please provide text to update' });
+    }
+
+    const post = await Post.findOne({ "comments._id": commentId });
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    const comment = post.comments.id(commentId);
+
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    if (comment.user.toString() !== userId.toString()) {
+      return res.status(403).json({ message: 'You are not authorized to edit this comment' });
+    }
+
+    comment.text = text;
+
+    await post.save();
+
+    res.status(200).json({ message: 'Comment updated successfully', post });
+  } catch (error) {
+    console.error("Error in editComment controller:", error);
+    res.status(500).json({
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+};
+
+const editPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { text } = req.body;
+    const userId = req.user._id;
+
+    if (!text) {
+      return res.status(400).json({ message: 'Please provide text to update' });
+    }
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    if (post.user.toString() !== userId.toString()) {
+      return res.status(403).json({ message: 'You are not authorized to edit this post' });
+    }
+
+    post.text = text;
+
+    await post.save();
+
+    res.status(200).json({ message: 'Post updated successfully', post });
+  } catch (error) {
+    console.error("Error in editPost controller:", error);
+    res.status(500).json({
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+};
+
+const reportComment = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const { userId } = req.user;
+    const { commentId } = req.params;
+    console.log(reason)
+
+    const posts = await Post.find({ "comments._id": commentId });
+    if (posts.length === 0) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    const post = posts[0];
+
+    const comment = post.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    const isAlreadyReported = comment.reports.some(report => report.user.toString() === userId);
+    if (isAlreadyReported) {
+      return res.status(400).json({ message: "You have already reported this comment" });
+    }
+
+    comment.reports.push({ user: userId, reason });
+    await post.save();
+
+    res.status(200).json({
+      message: "Comment reported successfully",
+      post,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+
 
 module.exports = {
   createPost,
@@ -211,4 +416,9 @@ module.exports = {
   getLikedPosts,
   getFollowingPosts,
   getUserPost,
+  getPostById,
+  reportPost,
+  editComment
+  , editPost
+  , reportComment
 };

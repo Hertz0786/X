@@ -31,6 +31,7 @@ const searchPosts = async (req, res) => {
     return res.status(400).json({ message: "Search query is required" });
   }
 
+
   try {
     const posts = await Post.find({
       $or: [{ text: { $regex: search, $options: "i" } }],
@@ -42,7 +43,6 @@ const searchPosts = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 module.exports = {
   searchUsers,
   searchPosts,

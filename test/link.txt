@@ -28,14 +28,14 @@ router.post("/like/:id", protectRoute, likeUnLikePost);
 router.get("/following", protectRoute, getFollowingPosts);
 router.get("/user/:username", protectRoute, getUserPost); // Assuming you want to get posts by user ID////////////////////////////
 
-/////////////////////////////
+///////////////////////////// 
 
 router.post("/profile/:username", protectRoute, getUserProfile);
-router.get("/suggested", protectRoute, getSuggestedUsers);
-router.post("/follow/:id", protectRoute, followUnfollowUser);/////////////////////////
+router.get("/suggested", protectRoute, getSuggestedUsers);  ////// not yet 
+router.post("/follow/:id", protectRoute, followUnfollowUser)
 router.post("/update", protectRoute, updateUserProfile);
 
-////////////////////////////////
+////////////////////////////////  done . 
 
 router.get('/users', protectRoute, searchUsers);
 router.get('/posts', protectRoute, searchPosts);

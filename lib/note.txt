@@ -1,22 +1,13 @@
 
-Lấy tên user khi tìm kiếm bài viêt
-
-khi ấn vào bài viết trong tìm kiếm thì sẽ hiển thị bài viết được chọn ra
-
-khi ấn vào user được tìm kiếm thì hiển thị ra user của người đó
 
 Tương tự với bên thông báo khi ấn vào avatar thì hển thị ra người dùng và ấn bài viết
 thì hiển thị ra bài viết
-
-Xóa 1 số nút bên thông báo , nếu có thể thì update sau và phân chia ra
 
 hiển thị những người đã từng nhắn tin ở mess và rút gọn bớt 1 trang nhắn tin để làm gọn
 chương trình
 
 setting lại avatar người nhắn trong nhắn tin hiển thị chữ cái đầu tiên
 set ting lại avatar bên tìm kiếm và thông báo
-
-khi ấn vào avatar ở các bài post sẽ hiện ra thông tin người đăng bài
 
 Thống kê lại số người cmt ở các bài viết
 
@@ -25,9 +16,14 @@ Thống kê lại số người cmt ở các bài viết
 
 Ở trang chủ người thì hiển thị thêm 1 so thong tin phu hop voi backend
 
-Setting ảnh bìa ở trang chủ người dùng,
 
 Trong bài viết đã thích cũng làm tương tự ... !!!
+
+Thêm nút report post
+
+Them nut report cmt
+
+
 
 ////////////////////////////
 

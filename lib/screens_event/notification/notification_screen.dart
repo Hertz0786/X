@@ -16,7 +16,7 @@ class NotificationScreen extends StatefulWidget {
 
 class _NotificationScreenState extends State<NotificationScreen> {
   int selectedTab = 0;
-  final List<String> tabs = ["Tất cả", "Đề cập", "Đã xác nhận"];
+  final List<String> tabs = ["Tất cả"];
   GetMeObject? currentUser;
   String? currentUserId;
   bool isLoading = true;
@@ -103,7 +103,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
         leading: GestureDetector(
           onTap: () {
             if (currentUserId != null) {
-              // Truyền userId vào ProfileScreen
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -113,7 +112,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             }
           },
           child: Padding(
-            padding: const EdgeInsets.all(6.0),
+            padding: const EdgeInsets.all(8.0), // 👈 chỉnh cho bằng SearchScreen
             child: currentUser?.profileImg != null && currentUser!.profileImg!.isNotEmpty
                 ? CircleAvatar(radius: 22, backgroundImage: NetworkImage(currentUser!.profileImg!))
                 : CircleAvatar(
@@ -126,6 +125,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
           ),
         ),
+
         title: const Text("Thông báo", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         actions: [
           IconButton(

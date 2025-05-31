@@ -314,21 +314,19 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
           elevation: 0,
           leading: GestureDetector(
             onTap: () {
-              // Đảm bảo truyền userId vào ProfileScreen
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ProfileScreen(userId: currentUserId!), // Truyền userId vào ProfileScreen
-                ),
-              );
+              if (currentUserId != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProfileScreen(userId: currentUserId!),
+                  ),
+                );
+              }
             },
             child: Padding(
-              padding: const EdgeInsets.all(6.0),
+              padding: const EdgeInsets.all(8.0), // 👈 chỉnh cho bằng SearchScreen
               child: currentUser?.profileImg != null && currentUser!.profileImg!.isNotEmpty
-                  ? CircleAvatar(
-                radius: 22,
-                backgroundImage: NetworkImage(currentUser!.profileImg!),
-              )
+                  ? CircleAvatar(radius: 22, backgroundImage: NetworkImage(currentUser!.profileImg!))
                   : CircleAvatar(
                 radius: 22,
                 backgroundColor: Colors.purple,
@@ -339,6 +337,7 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
               ),
             ),
           ),
+
           centerTitle: true,
           title: const Text(
             'X',

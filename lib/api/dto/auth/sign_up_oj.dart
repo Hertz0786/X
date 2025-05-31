@@ -1,21 +1,30 @@
 class SignUpObject {
-  String username;
-  String fullname;
-  String password;
-  String email;
+  final String username;
+  final String fullname;
+  final String password;
+  final String email;
+  final String? id;
+  final String? token;
+
   SignUpObject({
     required this.username,
     required this.fullname,
     required this.password,
     required this.email,
+    this.id,
+    this.token,
   });
 
-  factory SignUpObject.fromJson(Map<String, dynamic> json) => SignUpObject(
-    username: json['username']??'',
-    fullname: json['fullname']??'',
-    password: json['password']??'',
-    email: json['email']??'',
-  );
+  factory SignUpObject.fromJson(Map<String, dynamic> json) {
+    return SignUpObject(
+      username: json['username'],
+      fullname: json['fullname'] ?? '',
+      password: '',
+      email: json['email'],
+      id: json['_Id'] ?? json['_id'],
+      token: json['accessToken'],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'username': username,

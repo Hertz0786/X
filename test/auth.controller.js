@@ -60,6 +60,7 @@ const signup = async (req, res) => {
         coverImg: newUser.coverImg,
         bio: newUser.bio,
         link: newUser.link,
+        user: newUser,
         accessToken
       });
     }else {
@@ -100,17 +101,18 @@ const login = async (req, res) => {
     });
     res.status(200).json({
       message: "Login successful",
-      _Id: user._id,
-      username: user.username,
-      fullname: user.fullname,
-      email: user.email,
-      profileImg: user.profileImg,
-      coverImg: user.coverImg,
-      bio: user.bio,
-      link: user.link,
-      // user: user,
+       _Id: user._id,
+       username: user.username,
+       fullname: user.fullname,
+       email: user.email,
+       profileImg: user.profileImg,
+       coverImg: user.coverImg,
+       bio: user.bio,
+       link: user.link,
+      user: user,
       accessToken
     });
+
   } catch (error) {
     console.log("Error in login controller", error);
     res.status(500).json({
@@ -135,21 +137,20 @@ const logout = (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const {userId} = req.user; // Assuming you have middleware to set req.user
-    const user = await User.findById(userId).select("-password"); // Exclude password from the response
+    const { userId } = req.user;
+    const user = await User.findById(userId).select("-password");
+
     if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
+      return res.status(404).json({ message: "User not found" });
     }
+
     res.status(200).json(user);
   } catch (error) {
     console.log("Error in getUser controller", error);
-    res.status(500).json({
-      message: "Internal server error",
-    });
+    res.status(500).json({ message: "Internal server error" });
   }
-}
+};
+
 
 module.exports = {
   signup,

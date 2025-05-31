@@ -48,7 +48,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
     try {
       final updatedPost = await commentService.commentOnPost(comment);
-
       setState(() {
         _comments = updatedPost.comments;
         _commentController.clear();
@@ -80,44 +79,74 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       ),
       body: Column(
         children: [
-          ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Colors.white,
-              backgroundImage: NetworkImage(
-                "https://cryptologos.cc/logos/uniswap-uniswap-logo.png",
-              ),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.white,
+                  backgroundImage: NetworkImage(
+                    post.profileImg ??
+                        "https://cryptologos.cc/logos/uniswap-uniswap-logo.png",
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        post.fullname ?? post.username ?? "Người dùng",
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        post.text ?? '',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      if (post.image != null) ...[
+                        const SizedBox(height: 8),
+                        Image.network(post.image!)
+                      ]
+                    ],
+                  ),
+                ),
+              ],
             ),
-            title: Text(post.text ?? '', style: const TextStyle(color: Colors.white)),
-            subtitle: post.image != null
-                ? Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Image.network(post.image!),
-            )
-                : null,
           ),
           const Divider(color: Colors.grey),
           const Padding(
             padding: EdgeInsets.all(8.0),
-            child: Text("Bình luận", style: TextStyle(color: Colors.white, fontSize: 16)),
+            child: Text("Bình luận",
+                style: TextStyle(color: Colors.white, fontSize: 16)),
           ),
           Expanded(
             child: _isLoadingComments
                 ? const Center(child: CircularProgressIndicator())
                 : _comments.isEmpty
-                ? const Center(child: Text("Chưa có bình luận nào", style: TextStyle(color: Colors.grey)))
+                ? const Center(
+                child: Text("Chưa có bình luận nào",
+                    style: TextStyle(color: Colors.grey)))
                 : ListView.builder(
               itemCount: _comments.length,
               itemBuilder: (context, index) {
                 final cmt = _comments[index];
                 return ListTile(
-                  title: Text(cmt.text, style: const TextStyle(color: Colors.white)),
-                  subtitle: Text("Người dùng: ${cmt.user}", style: const TextStyle(color: Colors.grey)),
+                  title: Text(cmt.text,
+                      style: const TextStyle(color: Colors.white)),
+                  subtitle: Text("Người dùng: ${cmt.user}",
+                      style:
+                      const TextStyle(color: Colors.grey)),
                 );
               },
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: const BoxDecoration(
               color: Colors.black,
               border: Border(top: BorderSide(color: Colors.grey)),
@@ -137,7 +166,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 ),
                 IconButton(
                   icon: _isSubmitting
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.send, color: Colors.blue),
                   onPressed: _isSubmitting ? null : _submitComment,
                 ),

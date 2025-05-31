@@ -18,6 +18,23 @@ const getUserProfile = async (req, res) => {
 };
 const mongoose = require("mongoose");
 
+const getUser = async (req, res) => {
+  try {
+    let { id } = req.params;
+    id = id.trim();
+
+    const user = await User.findById(id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error in getUserProfile:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+};
+
+
 const getSuggestedUsers = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -135,7 +152,7 @@ const updateUserProfile = async (req, res) => {
     }
     if(coverImg) {
       if(user.coverImg) {
-        const publicId = user.coverImg.split("/").pop().split("."       )[0];
+        const publicId = user.coverImg.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(publicId);
       }
       const uploadedResponse = await cloudinary.uploader.upload(coverImg);
@@ -159,9 +176,43 @@ const updateUserProfile = async (req, res) => {
   } catch (error) {}
 };
 
+const changPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const { userId } = req.user;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters long" });
+    }
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "New password and confirm password do not match" });
+    }
+    if (newPassword === currentPassword) {
+      return res.status(400).json({ message: "New password cannot be the same as current password" });
+    }
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.status(200).json({ message: "Password changed successfully", user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+
+
 module.exports = {
   getUserProfile,
   getSuggestedUsers,
   followUnfollowUser,
   updateUserProfile,
+  getUser,
+  changPassword,
 };

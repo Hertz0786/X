@@ -46,7 +46,8 @@ class _LikedPostsScreenState extends State<LikedPostsScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : likedPosts.isEmpty
-          ? const Center(child: Text("Chưa thích bài viết nào", style: TextStyle(color: Colors.white70)))
+          ? const Center(
+          child: Text("Chưa thích bài viết nào", style: TextStyle(color: Colors.white70)))
           : ListView.builder(
         itemCount: likedPosts.length,
         itemBuilder: (context, index) {
@@ -68,26 +69,38 @@ class _LikedPostsScreenState extends State<LikedPostsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Người đăng
                     Row(
                       children: [
-                        const CircleAvatar(
+                        CircleAvatar(
+                          radius: 22,
                           backgroundColor: Colors.white,
-                          backgroundImage: NetworkImage(
-                              "https://cryptologos.cc/logos/uniswap-uniswap-logo.png"),
+                          backgroundImage: (post.profileImg != null && post.profileImg!.isNotEmpty)
+                              ? NetworkImage(post.profileImg!)
+                              : null,
+                          child: (post.profileImg == null || post.profileImg!.isEmpty)
+                              ? Text(
+                            post.username?.substring(0, 1).toUpperCase() ?? "?",
+                            style: const TextStyle(color: Colors.black),
+                          )
+                              : null,
                         ),
                         const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            "Người đăng: ${post.userId ?? 'Ẩn danh'}",
-                            style: const TextStyle(color: Colors.white70),
-                          ),
+                        Text(
+                          post.username != null ? "@${post.username}" : "Ẩn danh",
+                          style: const TextStyle(color: Colors.white70),
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
+
+                    // Nội dung
                     if (post.text != null)
                       Text(post.text!,
-                          style: const TextStyle(color: Colors.white, fontSize: 16)),
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 16)),
+
+                    // Hình ảnh (nếu có)
                     if (post.image != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 10),
@@ -97,6 +110,8 @@ class _LikedPostsScreenState extends State<LikedPostsScreen> {
                         ),
                       ),
                     const SizedBox(height: 10),
+
+                    // Like
                     Row(
                       children: [
                         const Icon(Icons.favorite, color: Colors.pinkAccent),

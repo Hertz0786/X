@@ -1,37 +1,52 @@
+import 'package:kotlin/api/dto/post/create_post_oj.dart';
 import 'package:kotlin/api/client/user/get_user.dart';
 
 class PostSearchResult {
-  final String id;
+  final String? id;
+  final String? userId;
   final String text;
   final String? image;
-  final String userId;
-  String authorName = 'Unknown'; // Giá trị mặc định cho tên tác giả
+
+  String? authorName;
+  String? authorProfileImg;
 
   PostSearchResult({
-    required this.id,
+    this.id,
+    this.userId,
     required this.text,
     this.image,
-    required this.userId,
+    this.authorName,
+    this.authorProfileImg,
   });
 
-  // Phương thức để lấy tên tác giả từ API
-  Future<void> fetchAuthorName(GetUser getUser) async {
-    try {
-      final profile = await getUser.fetchProfileById(userId); // Gọi API để lấy thông tin người dùng
-      authorName = profile.username ?? 'Unknown'; // Cập nhật tên người dùng
-    } catch (e) {
-      print("Lỗi khi lấy tên tác giả: $e");
-      authorName = 'Unknown'; // Nếu có lỗi, tên tác giả vẫn là 'Unknown'
-    }
-  }
-
-  // Factory constructor để khởi tạo từ JSON
   factory PostSearchResult.fromJson(Map<String, dynamic> json) {
     return PostSearchResult(
       id: json['_id'],
-      text: json['text'],
+      userId: json['user'],
+      text: json['text'] ?? '',
       image: json['image'],
-      userId: json['user'], // userId từ trường 'user' trong JSON
+    );
+  }
+
+  Future<void> fetchAuthorName(GetUser getUser) async {
+    try {
+      final user = await getUser.fetchProfileById(userId!);
+      authorName = user.fullname ?? user.username ?? 'Ẩn danh';
+      authorProfileImg = user.profileImg;
+    } catch (e) {
+      authorName = "Ẩn danh";
+      authorProfileImg = null;
+    }
+  }
+
+  CreatePostObject toCreatePostObject() {
+    return CreatePostObject(
+      id: id,
+      userId: userId,
+      text: text,
+      image: image,
+      fullname: authorName,
+      profileImg: authorProfileImg,
     );
   }
 }
