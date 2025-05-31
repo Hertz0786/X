@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'package:kotlin/api/client/api_client.dart';
 import 'package:kotlin/api/client/post/comment_on_post_api.dart';
 import 'package:kotlin/api/dto/post/create_post_oj.dart';
 import 'package:kotlin/api/dto/post/comment_on_post_oj.dart';
 import 'package:kotlin/api/client/token_storage.dart';
 import 'package:kotlin/api/dto/post/cm_oj.dart';
+import 'package:kotlin/api/dto/auth/get_me_oj.dart';
+import 'package:kotlin/api/client/user/get_user.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final CreatePostObject post;
@@ -20,6 +23,23 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   bool _isSubmitting = false;
   bool _isLoadingComments = false;
   List<CMObject> _comments = [];
+  final Map<String, GetMeObject> _userProfiles = {};
+
+  final List<Color> _avatarColors = [
+    Colors.red,
+    Colors.green,
+    Colors.blue,
+    Colors.orange,
+    Colors.purple,
+    Colors.teal,
+    Colors.indigo,
+    Colors.pink,
+  ];
+
+  Color _getRandomColorExcludingBlack() {
+    final random = Random();
+    return _avatarColors[random.nextInt(_avatarColors.length)];
+  }
 
   Future<void> _submitComment() async {
     final text = _commentController.text.trim();
@@ -61,6 +81,24 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
+  Future<GetMeObject?> _getUserProfile(String userId) async {
+    if (_userProfiles.containsKey(userId)) {
+      return _userProfiles[userId];
+    }
+
+    try {
+      final userService = GetUser(apiClient: ApiClient());
+      final profile = await userService.fetchProfileById(userId);
+      setState(() {
+        _userProfiles[userId] = profile;
+      });
+      return profile;
+    } catch (e) {
+      debugPrint("Lỗi khi lấy thông tin user: $e");
+      return null;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -87,8 +125,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 CircleAvatar(
                   backgroundColor: Colors.white,
                   backgroundImage: NetworkImage(
-                    post.profileImg ??
-                        "https://cryptologos.cc/logos/uniswap-uniswap-logo.png",
+                    post.profileImg?.isNotEmpty == true
+                        ? post.profileImg!
+                        : "https://via.placeholder.com/150",
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -134,12 +173,45 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               itemCount: _comments.length,
               itemBuilder: (context, index) {
                 final cmt = _comments[index];
-                return ListTile(
-                  title: Text(cmt.text,
-                      style: const TextStyle(color: Colors.white)),
-                  subtitle: Text("Người dùng: ${cmt.user}",
-                      style:
-                      const TextStyle(color: Colors.grey)),
+                return FutureBuilder<GetMeObject?>(
+                  future: cmt.user != null
+                      ? _getUserProfile(cmt.user!)
+                      : Future.value(null),
+                  builder: (context, snapshot) {
+                    final user = snapshot.data;
+                    final avatarUrl = user?.profileImg;
+                    final fullName =
+                        user?.fullname ?? user?.username ?? "Ẩn danh";
+                    final firstLetter = fullName.isNotEmpty
+                        ? fullName[0].toUpperCase()
+                        : '?';
+
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundImage: (avatarUrl != null &&
+                            avatarUrl.isNotEmpty)
+                            ? NetworkImage(avatarUrl)
+                            : null,
+                        backgroundColor: (avatarUrl == null ||
+                            avatarUrl.isEmpty)
+                            ? _getRandomColorExcludingBlack()
+                            : Colors.transparent,
+                        child: (avatarUrl == null ||
+                            avatarUrl.isEmpty)
+                            ? Text(firstLetter,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold))
+                            : null,
+                      ),
+                      title: Text(cmt.text,
+                          style:
+                          const TextStyle(color: Colors.white)),
+                      subtitle: Text("Người dùng: $fullName",
+                          style:
+                          const TextStyle(color: Colors.grey)),
+                    );
+                  },
                 );
               },
             ),

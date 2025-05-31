@@ -17,12 +17,20 @@ class GetAllPostApi {
     final response = await apiClient.get(
       '/api/posts/all',
       fromJson: (json) {
-        final postsJson = json['posts'] as List;
-        return postsJson.map((e) => CreatePostObject.fromJson(e)).toList();
+        final postsJson = json['posts'];
+        if (postsJson is List) {
+          return postsJson
+              .map((e) => e is Map<String, dynamic> ? CreatePostObject.fromJson(e) : null)
+              .whereType<CreatePostObject>()
+              .toList();
+        } else {
+          throw Exception("Dữ liệu posts không đúng định dạng List.");
+        }
       },
       token: token,
     );
 
     return response;
   }
+
 }

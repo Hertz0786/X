@@ -1,23 +1,19 @@
 class CMObject {
+  final String id;
   final String text;
-  final String? user;
+  final String user;
 
   CMObject({
+    required this.id,
     required this.text,
-    this.user,
+    required this.user,
   });
 
   factory CMObject.fromJson(Map<String, dynamic> json) {
     return CMObject(
+      id: json['_id'] ?? '',
       text: json['text'] ?? '',
-      user: json['user'] is Map ? json['user']['_id'] : json['user']?.toString(),
+      user: json['user'] ?? '',
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'text': text,
-      'user': user,
-    };
   }
 }
