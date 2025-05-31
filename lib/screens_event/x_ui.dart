@@ -144,6 +144,10 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
     }
   }
 
+  int _countLikedPosts(List<CreatePostObject> posts) {
+    return posts.where((p) => p.likes?.contains(currentUserId) ?? false).length;
+  }
+
   void _showReportSheet(String postId) {
     final TextEditingController controller = TextEditingController();
     showModalBottomSheet(
@@ -450,4 +454,6 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
       ),
     );
   }
+
+
 }

@@ -37,6 +37,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await _fetchUserAndPosts();
   }
 
+  int _countLikedPosts(List<CreatePostObject> posts) {
+    return posts.where((p) => p.likes?.contains(currentUserId) ?? false).length;
+  }
+
+
   Future<void> _fetchUserAndPosts() async {
     setState(() {
       isLoading = true;
@@ -222,9 +227,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       _buildStat("Bài viết", userPosts.length),
                       const SizedBox(width: 24),
-                      _buildStat("Đã thích", 0),
+                      _buildStat("Đã thích", _countLikedPosts(userPosts)),
                     ],
                   ),
+
                 ],
               ),
             ),
