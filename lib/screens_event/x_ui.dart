@@ -4,15 +4,18 @@ import 'package:kotlin/api/client/post/delete_post_api.dart';
 import 'package:kotlin/api/client/post/get_all_post_api.dart';
 import 'package:kotlin/api/client/post/get_fl_post_api.dart';
 import 'package:kotlin/api/client/post/like_unlike_post_api.dart';
+import 'package:kotlin/api/client/rp-ed/report_service.dart';
 import 'package:kotlin/api/client/id_storage.dart';
 import 'package:kotlin/api/client/token_storage.dart';
 import 'package:kotlin/api/client/auth/auth_me_api.dart';
 import 'package:kotlin/api/dto/post/create_post_oj.dart';
 import 'package:kotlin/api/dto/auth/get_me_oj.dart';
+import 'package:kotlin/api/client/rp-ed/report_request_dto.dart';
+import 'package:kotlin/api/client/user/get_user.dart';
+
 import 'FollowButton.dart';
 import 'post/post_detail_screen.dart';
 import 'user/profile_screen.dart';
-import 'package:kotlin/api/client/user/get_user.dart';
 
 class XUI extends StatefulWidget {
   const XUI({super.key});
@@ -38,9 +41,7 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
     loadData();
     tabController.addListener(() {
       if (tabController.indexIsChanging) return;
-      setState(() {
-        isLoading = true;
-      });
+      setState(() => isLoading = true);
       if (tabController.index == 0) {
         fetchAllPosts();
       } else {
@@ -143,6 +144,78 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
     }
   }
 
+  void _showReportSheet(String postId) {
+    final TextEditingController controller = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Lý do báo cáo bài viết",
+                style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 4,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: "Nhập lý do...",
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.grey[850],
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  final reason = controller.text.trim();
+                  if (reason.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Vui lòng nhập lý do")),
+                    );
+                    return;
+                  }
+                  Navigator.pop(context); // Đóng bottom sheet
+                  try {
+                    await ReportService().reportPost(
+                      postId: postId,
+                      dto: ReportRequestDto(reason: reason),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Đã gửi báo cáo")),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Lỗi: $e")),
+                    );
+                  }
+                },
+                child: const Text("Gửi báo cáo"),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   bool _isFollowing(String userId) {
     return followingIds.contains(userId);
   }
@@ -214,14 +287,13 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
                       children: [
                         GestureDetector(
                           onTap: () async {
-                            // Khi nhấn vào avatar, gọi API GetUser để lấy thông tin người dùng
                             try {
                               final user = await GetUser(apiClient: ApiClient())
-                                  .fetchProfileById(post.userId!); // Lấy thông tin người dùng
+                                  .fetchProfileById(post.userId!);
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ProfileScreen(userId: post.userId!),  // Truyền userId vào ProfileScreen
+                                  builder: (context) => ProfileScreen(userId: post.userId!),
                                 ),
                               );
                             } catch (e) {
@@ -290,6 +362,12 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
                           "${post.likes?.length ?? 0} lượt thích",
                           style: const TextStyle(color: Colors.white70),
                         ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.flag, color: Colors.amber),
+                          onPressed: () => _showReportSheet(post.id ?? ''),
+                          tooltip: "Báo cáo bài viết",
+                        ),
                       ],
                     ),
                   ],
@@ -301,7 +379,6 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -324,7 +401,7 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
               }
             },
             child: Padding(
-              padding: const EdgeInsets.all(8.0), // 👈 chỉnh cho bằng SearchScreen
+              padding: const EdgeInsets.all(8.0),
               child: currentUser?.profileImg != null && currentUser!.profileImg!.isNotEmpty
                   ? CircleAvatar(radius: 22, backgroundImage: NetworkImage(currentUser!.profileImg!))
                   : CircleAvatar(
@@ -337,7 +414,6 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
               ),
             ),
           ),
-
           centerTitle: true,
           title: const Text(
             'X',
@@ -356,7 +432,6 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
             ],
           ),
         ),
-
         body: TabBarView(
           controller: tabController,
           children: [

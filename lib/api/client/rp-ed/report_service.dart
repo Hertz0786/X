@@ -1,5 +1,6 @@
 import 'package:kotlin/api/client/api_client.dart';
-import 'report_request_dto.dart';
+import 'package:kotlin/api/client/token_storage.dart';
+import 'package:kotlin/api/client/rp-ed/report_request_dto.dart';
 
 class ReportService {
   final ApiClient _apiClient = ApiClient();
@@ -8,29 +9,29 @@ class ReportService {
     required String postId,
     required ReportRequestDto dto,
   }) async {
-    try {
-      await _apiClient.post<Map<String, dynamic>>(
-        '/api/posts/$postId/report',
-        body: dto.toJson(),
-        fromJson: (json) => json as Map<String, dynamic>,
-      );
-    } catch (e) {
-      rethrow;
-    }
+    final token = await TokenStorage.getToken(); // ✅ Lấy token
+    if (token == null) throw Exception('Không tìm thấy token');
+
+    await _apiClient.post<Map<String, dynamic>>(
+      '/api/posts/report/post/$postId',
+      body: dto.toJson(),
+      token: token, // ✅ Gửi kèm token
+      fromJson: (json) => json,
+    );
   }
 
   Future<void> reportComment({
     required String commentId,
     required ReportRequestDto dto,
   }) async {
-    try {
-      await _apiClient.post<Map<String, dynamic>>(
-        '/api/comments/$commentId/report',
-        body: dto.toJson(),
-        fromJson: (json) => json as Map<String, dynamic>,
-      );
-    } catch (e) {
-      rethrow;
-    }
+    final token = await TokenStorage.getToken();
+    if (token == null) throw Exception('Không tìm thấy token');
+
+    await _apiClient.post<Map<String, dynamic>>(
+      '/api/posts/report/comment/$commentId',
+      body: dto.toJson(),
+      token: token,
+      fromJson: (json) => json,
+    );
   }
 }
