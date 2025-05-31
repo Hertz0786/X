@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:kotlin/api/client/api_client.dart';
 import 'package:kotlin/api/client/post/comment_on_post_api.dart';
+import 'package:kotlin/api/client/post/like_unlike_post_api.dart';
+import 'package:kotlin/api/client/rp-ed/report_service.dart';
+import 'package:kotlin/api/client/token_storage.dart';
+import 'package:kotlin/api/client/user/get_user.dart';
 import 'package:kotlin/api/dto/post/create_post_oj.dart';
 import 'package:kotlin/api/dto/post/comment_on_post_oj.dart';
-import 'package:kotlin/api/client/token_storage.dart';
 import 'package:kotlin/api/dto/post/cm_oj.dart';
 import 'package:kotlin/api/dto/auth/get_me_oj.dart';
-import 'package:kotlin/api/client/user/get_user.dart';
+import 'package:kotlin/api/client/rp-ed/report_request_dto.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final CreatePostObject post;
@@ -24,6 +27,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   bool _isLoadingComments = false;
   List<CMObject> _comments = [];
   final Map<String, GetMeObject> _userProfiles = {};
+  late CreatePostObject _currentPost;
 
   final List<Color> _avatarColors = [
     Colors.red,
@@ -36,6 +40,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     Colors.pink,
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _currentPost = widget.post;
+    _comments = widget.post.comments;
+  }
+
   Color _getRandomColorExcludingBlack() {
     final random = Random();
     return _avatarColors[random.nextInt(_avatarColors.length)];
@@ -45,9 +56,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final text = _commentController.text.trim();
     if (text.isEmpty) return;
 
-    setState(() {
-      _isSubmitting = true;
-    });
+    setState(() => _isSubmitting = true);
 
     final token = await TokenStorage.getToken();
     if (token == null) {
@@ -70,6 +79,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       final updatedPost = await commentService.commentOnPost(comment);
       setState(() {
         _comments = updatedPost.comments;
+        _currentPost = _currentPost.copyWith(comments: updatedPost.comments);
         _commentController.clear();
       });
     } catch (e) {
@@ -81,17 +91,77 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
-  Future<GetMeObject?> _getUserProfile(String userId) async {
-    if (_userProfiles.containsKey(userId)) {
-      return _userProfiles[userId];
-    }
+  Future<void> _toggleLike() async {
+    final token = await TokenStorage.getToken();
+    if (token == null || _currentPost.id == null) return;
 
     try {
-      final userService = GetUser(apiClient: ApiClient());
-      final profile = await userService.fetchProfileById(userId);
+      final updatedPost = await LikeUnlikePostApi(apiClient: ApiClient())
+          .likeOrUnlikePost(postId: _currentPost.id!, token: token);
       setState(() {
-        _userProfiles[userId] = profile;
+        _currentPost = _currentPost.copyWith(
+          likes: updatedPost.likes,
+          comments: updatedPost.comments,
+        );
       });
+    } catch (e) {
+      debugPrint("Lỗi khi like/unlike: $e");
+    }
+  }
+
+  Future<void> _showReportDialog({
+    required String targetId,
+    required bool isPost,
+  }) async {
+    final TextEditingController _reasonController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Báo cáo ${isPost ? 'bài viết' : 'bình luận'}'),
+        content: TextField(
+          controller: _reasonController,
+          decoration: const InputDecoration(hintText: 'Nhập lý do báo cáo'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () async {
+              final reason = _reasonController.text.trim();
+              if (reason.isEmpty) return;
+
+              final dto = ReportRequestDto(reason: reason);
+              try {
+                final reportService = ReportService();
+                if (isPost) {
+                  await reportService.reportPost(postId: targetId, dto: dto);
+                } else {
+                  await reportService.reportComment(commentId: targetId, dto: dto);
+                }
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Đã gửi báo cáo thành công")),
+                );
+              } catch (e) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Lỗi khi gửi báo cáo: $e")),
+                );
+              }
+            },
+            child: const Text('Gửi'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<GetMeObject?> _getUserProfile(String userId) async {
+    if (_userProfiles.containsKey(userId)) return _userProfiles[userId];
+
+    try {
+      final profile = await GetUser(apiClient: ApiClient()).fetchProfileById(userId);
+      setState(() => _userProfiles[userId] = profile);
       return profile;
     } catch (e) {
       debugPrint("Lỗi khi lấy thông tin user: $e");
@@ -100,14 +170,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _comments = widget.post.comments;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final post = widget.post;
+    final post = _currentPost;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -119,56 +183,77 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(12.0),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  backgroundColor: Colors.white,
-                  backgroundImage: NetworkImage(
-                    post.profileImg?.isNotEmpty == true
-                        ? post.profileImg!
-                        : "https://via.placeholder.com/150",
-                  ),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundImage: post.profileImg?.isNotEmpty == true
+                          ? NetworkImage(post.profileImg!)
+                          : null,
+                      backgroundColor: post.profileImg == null ? Colors.grey : Colors.transparent,
+                      child: post.profileImg == null
+                          ? const Icon(Icons.person, color: Colors.white)
+                          : null,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      post.fullname ?? post.username ?? 'Người dùng',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        post.fullname ?? post.username ?? "Người dùng",
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold),
+                const SizedBox(height: 12),
+                if (post.text != null)
+                  Text(post.text!, style: const TextStyle(color: Colors.white)),
+                if (post.image != null) ...[
+                  const SizedBox(height: 8),
+                  Image.network(post.image!)
+                ],
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        post.likes?.contains(post.userId) == true
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: Colors.pinkAccent,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        post.text ?? '',
-                        style: const TextStyle(color: Colors.white),
+                      onPressed: _toggleLike,
+                    ),
+                    Text(
+                      '${post.likes?.length ?? 0} lượt thích',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    const SizedBox(width: 16),
+                    Icon(Icons.comment, color: Colors.blueAccent, size: 18),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${_comments.length} bình luận',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.flag, color: Colors.red),
+                      tooltip: 'Báo cáo bài viết',
+                      onPressed: () => _showReportDialog(
+                        targetId: post.id ?? '',
+                        isPost: true,
                       ),
-                      if (post.image != null) ...[
-                        const SizedBox(height: 8),
-                        Image.network(post.image!)
-                      ]
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
           const Divider(color: Colors.grey),
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text("Bình luận",
-                style: TextStyle(color: Colors.white, fontSize: 16)),
-          ),
           Expanded(
             child: _isLoadingComments
                 ? const Center(child: CircularProgressIndicator())
                 : _comments.isEmpty
-                ? const Center(
-                child: Text("Chưa có bình luận nào",
-                    style: TextStyle(color: Colors.grey)))
+                ? const Center(child: Text("Chưa có bình luận nào", style: TextStyle(color: Colors.grey)))
                 : ListView.builder(
               itemCount: _comments.length,
               itemBuilder: (context, index) {
@@ -179,37 +264,28 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       : Future.value(null),
                   builder: (context, snapshot) {
                     final user = snapshot.data;
-                    final avatarUrl = user?.profileImg;
-                    final fullName =
-                        user?.fullname ?? user?.username ?? "Ẩn danh";
-                    final firstLetter = fullName.isNotEmpty
-                        ? fullName[0].toUpperCase()
-                        : '?';
+                    final fullName = user?.fullname ?? user?.username ?? "Ẩn danh";
+                    final avatar = user?.profileImg;
 
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundImage: (avatarUrl != null &&
-                            avatarUrl.isNotEmpty)
-                            ? NetworkImage(avatarUrl)
+                        backgroundImage: avatar != null && avatar.isNotEmpty
+                            ? NetworkImage(avatar)
                             : null,
-                        backgroundColor: (avatarUrl == null ||
-                            avatarUrl.isEmpty)
-                            ? _getRandomColorExcludingBlack()
-                            : Colors.transparent,
-                        child: (avatarUrl == null ||
-                            avatarUrl.isEmpty)
-                            ? Text(firstLetter,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold))
+                        backgroundColor: avatar == null ? _getRandomColorExcludingBlack() : Colors.transparent,
+                        child: avatar == null || avatar.isEmpty
+                            ? Text(fullName[0].toUpperCase(), style: const TextStyle(color: Colors.white))
                             : null,
                       ),
-                      title: Text(cmt.text,
-                          style:
-                          const TextStyle(color: Colors.white)),
-                      subtitle: Text("Người dùng: $fullName",
-                          style:
-                          const TextStyle(color: Colors.grey)),
+                      title: Text(cmt.text, style: const TextStyle(color: Colors.white)),
+                      subtitle: Text("Người dùng: $fullName", style: const TextStyle(color: Colors.grey)),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.flag, color: Colors.redAccent),
+                        onPressed: () => _showReportDialog(
+                          targetId: cmt.id,
+                          isPost: false,
+                        ),
+                      ),
                     );
                   },
                 );
@@ -217,8 +293,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             ),
           ),
           Container(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: const BoxDecoration(
               color: Colors.black,
               border: Border(top: BorderSide(color: Colors.grey)),
@@ -239,15 +314,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 IconButton(
                   icon: _isSubmitting
                       ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.send, color: Colors.blue),
                   onPressed: _isSubmitting ? null : _submitComment,
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

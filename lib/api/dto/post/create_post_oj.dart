@@ -70,6 +70,8 @@ class CreatePostObject {
     String? username,
     String? fullname,
     String? profileImg,
+    List<CMObject>? comments,
+    List<String>? likes,
   }) {
     return CreatePostObject(
       id: id,
@@ -80,8 +82,8 @@ class CreatePostObject {
       username: username ?? this.username,
       fullname: fullname ?? this.fullname,
       createdAt: createdAt,
-      likes: likes,
-      comments: comments,
+      likes: likes ?? this.likes,
+      comments: comments ?? this.comments,
       profileImg: profileImg ?? this.profileImg,
     );
   }

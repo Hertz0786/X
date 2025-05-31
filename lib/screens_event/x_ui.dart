@@ -362,6 +362,13 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
                           "${post.likes?.length ?? 0} lượt thích",
                           style: const TextStyle(color: Colors.white70),
                         ),
+                        const SizedBox(width: 16),
+                        const Icon(Icons.comment, color: Colors.blueAccent, size: 20),
+                        const SizedBox(width: 4),
+                        Text(
+                          "${post.comments.length} bình luận",
+                          style: const TextStyle(color: Colors.white70),
+                        ),
                         const Spacer(),
                         IconButton(
                           icon: const Icon(Icons.flag, color: Colors.amber),
@@ -370,6 +377,7 @@ class XUIState extends State<XUI> with TickerProviderStateMixin {
                         ),
                       ],
                     ),
+
                   ],
                 ),
               ),
