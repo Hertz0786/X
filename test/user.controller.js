@@ -1,7 +1,8 @@
-const User = require("../models/user.model");
-const Notification = require("../models/notification.model");
-const bcrypt = require("bcrypt");
-const cloudinary = require("cloudinary").v2;
+import User from "../models/user.model.js";
+import Notification from "../models/notification.model.js";
+import bcrypt from "bcrypt";
+import { v2 as cloudinary } from "cloudinary";
+import mongoose from "mongoose";
 
 const getUserProfile = async (req, res) => {
   try {
@@ -16,7 +17,6 @@ const getUserProfile = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-const mongoose = require("mongoose");
 
 const getUser = async (req, res) => {
   try {
@@ -34,7 +34,6 @@ const getUser = async (req, res) => {
   }
 };
 
-
 const getSuggestedUsers = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -44,7 +43,7 @@ const getSuggestedUsers = async (req, res) => {
     const users = await User.aggregate([
       {
         $match: {
-          _id: { $ne: new mongoose.Types.ObjectId(userId) }, // loại chính mình
+          _id: { $ne: new mongoose.Types.ObjectId(userId) },
         },
       },
       { $sample: { size: 10 } },
@@ -67,7 +66,6 @@ const getSuggestedUsers = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 const followUnfollowUser = async (req, res) => {
   try {
@@ -106,6 +104,7 @@ const followUnfollowUser = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 const updateUserProfile = async (req, res) => {
   try {
     const {
@@ -119,39 +118,36 @@ const updateUserProfile = async (req, res) => {
     } = req.body;
     let { profileImg, coverImg } = req.body;
 
-    const {userId} = req.user;
+    const { userId } = req.user;
     let user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    if((newPassword && !currentPassword) || (!newPassword && currentPassword)){
+    if ((newPassword && !currentPassword) || (!newPassword && currentPassword)) {
       return res.status(400).json({ message: "Please provide both current and new password" });
     }
 
-    if(currentPassword && newPassword) {
-      const isMatch = await bcrypt.compare(
-        currentPassword,
-        user.password
-      );
-      if(!isMatch) {
+    if (currentPassword && newPassword) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
         return res.status(400).json({ message: "Current password is incorrect" });
       }
-      if(newPassword.length < 6) {
+      if (newPassword.length < 6) {
         return res.status(400).json({ message: "New password must be at least 6 characters long" });
       }
       user.password = await bcrypt.hash(newPassword, 10);
     }
 
-    if(profileImg) {
-      if(user.profileImg) {
+    if (profileImg) {
+      if (user.profileImg) {
         const publicId = user.profileImg.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(publicId);
       }
       const uploadedResponse = await cloudinary.uploader.upload(profileImg);
       profileImg = uploadedResponse.secure_url;
     }
-    if(coverImg) {
-      if(user.coverImg) {
+    if (coverImg) {
+      if (user.coverImg) {
         const publicId = user.coverImg.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(publicId);
       }
@@ -172,8 +168,10 @@ const updateUserProfile = async (req, res) => {
       message: "Profile updated successfully",
       user,
     });
-
-  } catch (error) {}
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 const changPassword = async (req, res) => {
@@ -204,11 +202,9 @@ const changPassword = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
-
-
-module.exports = {
+export {
   getUserProfile,
   getSuggestedUsers,
   followUnfollowUser,

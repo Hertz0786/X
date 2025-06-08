@@ -1,27 +1,77 @@
-const { getReceiverSocketId, io } = require("../lib/socket");
-const Message = require("../models/message.model");
-const User = require("../models/user.model");
-const cloudinary = require("cloudinary").v2;
+import mongoose from "mongoose";
+import { getReceiverSocketId, io } from "../lib/socket.js";
+import Message from "../models/message.model.js";
+import User from "../models/user.model.js";
+import { v2 as cloudinary } from "cloudinary";
 
 const getUsersForSideBar = async (req, res) => {
   try {
-    const { userId } = req.user; // Assuming you have userId in req.user after authentication
-    const users = await User.find({ _id: { $ne: userId } });
-    res.status(200).json(users);
+    const userId = new mongoose.Types.ObjectId(req.user.userId);
+
+    const conversations = await Message.aggregate([
+      {
+        $match: {
+          $or: [
+            { senderId: userId },
+            { receiverId: userId }
+          ]
+        }
+      },
+      {
+        $addFields: {
+          otherUser: {
+            $cond: {
+              if: { $eq: ['$senderId', userId] },
+              then: '$receiverId',
+              else: '$senderId'
+            }
+          }
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      },
+      {
+        $group: {
+          _id: '$otherUser',
+          lastMessageAt: { $first: '$createdAt' }
+        }
+      },
+      {
+        $sort: { lastMessageAt: -1 }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $replaceRoot: { newRoot: '$user' }
+      }
+    ]);
+
+    res.status(200).json(conversations);
   } catch (error) {
+    console.error("Error getting sidebar users:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 const getMessages = async (req, res) => {
   try {
-    const { userId } = req.user; // Assuming you have userId in req.user after authentication
-    const { id } = req.params; // aaaaaaaaaa??????????? id ng nhan tin
+    const { userId } = req.user;
+    const { id } = req.params;
     const messages = await Message.find({
       $or: [
         { senderId: userId, receiverId: id },
-        { senderId: id, receiverId: userId },
-      ],
+        { senderId: id, receiverId: userId }
+      ]
     });
     res.status(200).json(messages);
   } catch (error) {
@@ -45,22 +95,23 @@ const sendMessage = async (req, res) => {
       senderId: userId,
       receiverId: id,
       text,
-      image: imageUrl,
+      image: imageUrl
     });
 
     await newMessage.save();
 
-    const receiverSocketId = getReceiverSocketId(id); // Assuming you have a function to get the receiver's socket ID
-    if(receiverSocketId) {
+    const receiverSocketId = getReceiverSocketId(id);
+    if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
     }
+
     res.status(201).json(newMessage);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
 };
 
-module.exports = {
+export {
   getUsersForSideBar,
   getMessages,
   sendMessage,

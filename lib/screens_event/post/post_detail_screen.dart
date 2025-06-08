@@ -13,9 +13,10 @@ import 'package:kotlin/api/dto/auth/get_me_oj.dart';
 import 'package:kotlin/api/client/rp-ed/report_request_dto.dart';
 
 class PostDetailScreen extends StatefulWidget {
-  final CreatePostObject post;
+  final CreatePostObject? post;
+  final String? postId;
 
-  const PostDetailScreen({super.key, required this.post});
+  const PostDetailScreen({super.key, this.post, this.postId});
 
   @override
   State<PostDetailScreen> createState() => _PostDetailScreenState();
@@ -27,24 +28,39 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   bool _isLoadingComments = false;
   List<CMObject> _comments = [];
   final Map<String, GetMeObject> _userProfiles = {};
-  late CreatePostObject _currentPost;
+  CreatePostObject? _currentPost;
 
   final List<Color> _avatarColors = [
-    Colors.red,
-    Colors.green,
-    Colors.blue,
-    Colors.orange,
-    Colors.purple,
-    Colors.teal,
-    Colors.indigo,
-    Colors.pink,
+    Colors.red, Colors.green, Colors.blue, Colors.orange,
+    Colors.purple, Colors.teal, Colors.indigo, Colors.pink,
   ];
 
   @override
   void initState() {
     super.initState();
-    _currentPost = widget.post;
-    _comments = widget.post.comments;
+    if (widget.post != null) {
+      _currentPost = widget.post!;
+      _comments = _currentPost!.comments;
+    } else if (widget.postId != null) {
+      _fetchPostById(widget.postId!);
+    }
+  }
+
+  Future<void> _fetchPostById(String postId) async {
+    setState(() => _isLoadingComments = true);
+    try {
+      final post = await GetUser(apiClient: ApiClient()).fetchPostById(postId);
+      setState(() {
+        _currentPost = post;
+        _comments = post.comments;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Không tìm được bài viết: $e")),
+      );
+    } finally {
+      setState(() => _isLoadingComments = false);
+    }
   }
 
   Color _getRandomColorExcludingBlack() {
@@ -54,7 +70,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   Future<void> _submitComment() async {
     final text = _commentController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _currentPost?.id == null) return;
 
     setState(() => _isSubmitting = true);
 
@@ -68,18 +84,16 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
 
     final comment = CommentOnPostObject(
-      idpost: widget.post.id ?? '',
+      idpost: _currentPost!.id!,
       text: text,
       token: token,
     );
 
-    final commentService = CommentService(ApiClient());
-
     try {
-      final updatedPost = await commentService.commentOnPost(comment);
+      final updatedPost = await CommentService(ApiClient()).commentOnPost(comment);
       setState(() {
         _comments = updatedPost.comments;
-        _currentPost = _currentPost.copyWith(comments: updatedPost.comments);
+        _currentPost = _currentPost!.copyWith(comments: updatedPost.comments);
         _commentController.clear();
       });
     } catch (e) {
@@ -93,13 +107,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   Future<void> _toggleLike() async {
     final token = await TokenStorage.getToken();
-    if (token == null || _currentPost.id == null) return;
+    if (token == null || _currentPost?.id == null) return;
 
     try {
       final updatedPost = await LikeUnlikePostApi(apiClient: ApiClient())
-          .likeOrUnlikePost(postId: _currentPost.id!, token: token);
+          .likeOrUnlikePost(postId: _currentPost!.id!, token: token);
       setState(() {
-        _currentPost = _currentPost.copyWith(
+        _currentPost = _currentPost!.copyWith(
           likes: updatedPost.likes,
           comments: updatedPost.comments,
         );
@@ -109,10 +123,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
-  Future<void> _showReportDialog({
-    required String targetId,
-    required bool isPost,
-  }) async {
+  Future<void> _showReportDialog({required String targetId, required bool isPost}) async {
     final TextEditingController _reasonController = TextEditingController();
 
     await showDialog(
@@ -171,7 +182,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final post = _currentPost;
+    if (_isLoadingComments || _currentPost == null) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final post = _currentPost!;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -189,11 +207,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 Row(
                   children: [
                     CircleAvatar(
-                      backgroundImage: post.profileImg?.isNotEmpty == true
+                      backgroundImage: (post.profileImg?.isNotEmpty == true)
                           ? NetworkImage(post.profileImg!)
                           : null,
-                      backgroundColor: post.profileImg == null ? Colors.grey : Colors.transparent,
-                      child: post.profileImg == null
+                      backgroundColor: (post.profileImg == null || post.profileImg!.isEmpty)
+                          ? Colors.grey
+                          : Colors.transparent,
+                      child: (post.profileImg == null || post.profileImg!.isEmpty)
                           ? const Icon(Icons.person, color: Colors.white)
                           : null,
                     ),
@@ -207,7 +227,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 const SizedBox(height: 12),
                 if (post.text != null)
                   Text(post.text!, style: const TextStyle(color: Colors.white)),
-                if (post.image != null) ...[
+                if (post.image != null && post.image!.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Image.network(post.image!)
                 ],
@@ -228,7 +248,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       style: const TextStyle(color: Colors.white),
                     ),
                     const SizedBox(width: 16),
-                    Icon(Icons.comment, color: Colors.blueAccent, size: 18),
+                    const Icon(Icons.comment, color: Colors.blueAccent, size: 18),
                     const SizedBox(width: 4),
                     Text(
                       '${_comments.length} bình luận',
@@ -238,10 +258,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     IconButton(
                       icon: const Icon(Icons.flag, color: Colors.red),
                       tooltip: 'Báo cáo bài viết',
-                      onPressed: () => _showReportDialog(
-                        targetId: post.id ?? '',
-                        isPost: true,
-                      ),
+                      onPressed: () => _showReportDialog(targetId: post.id ?? '', isPost: true),
                     ),
                   ],
                 ),
@@ -250,9 +267,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           ),
           const Divider(color: Colors.grey),
           Expanded(
-            child: _isLoadingComments
-                ? const Center(child: CircularProgressIndicator())
-                : _comments.isEmpty
+            child: _comments.isEmpty
                 ? const Center(child: Text("Chưa có bình luận nào", style: TextStyle(color: Colors.grey)))
                 : ListView.builder(
               itemCount: _comments.length,
@@ -272,7 +287,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         backgroundImage: avatar != null && avatar.isNotEmpty
                             ? NetworkImage(avatar)
                             : null,
-                        backgroundColor: avatar == null ? _getRandomColorExcludingBlack() : Colors.transparent,
+                        backgroundColor: avatar == null || avatar.isEmpty
+                            ? _getRandomColorExcludingBlack()
+                            : Colors.transparent,
                         child: avatar == null || avatar.isEmpty
                             ? Text(fullName[0].toUpperCase(), style: const TextStyle(color: Colors.white))
                             : null,

@@ -1,23 +1,22 @@
-app.use("/api/auth", authRouters);
-app.use("/api/users", userRouters);
-app.use("/api/posts", postRouters);
-app.use("/api/notifications", notificationRouters);
-app.use("/api/messages", messageRouters);
-app.use("/api/search", searchRouters);
-
-//////////////////////////   done 
-
-router.post("/me", protectRoute, getMe); // dmm quy
+router.post("/me", protectRoute, getMe);
 router.post("/signup", signup);
 router.post("/login", login);
 router.post("/logout", logout);
+router.post("/forgotPassword", ForgotPassword);
+router.post("/newPassword", newPassword);
 
-/////////////////////////  done 
+/////////////////////////////////////////////////////////
+
+router.get("/users", protectRoute, getUsersForSideBar);
+router.get("/:id", protectRoute, getMessages);
+router.post("/send/:id", protectRoute, sendMessage);
+ //////////////////////////////
 
 router.get("/", protectRoute, getNotifications);
+router.get("/web", protectRoute, getNotificationsWeb);
 router.delete("/", protectRoute, deleteNotifications);
 
-//////////////////////////
+//////////////////////////////
 
 router.get("/likes/:id", protectRoute, getLikedPosts);
 router.get("/all", protectRoute, getAllPost);
@@ -26,18 +25,36 @@ router.delete("/:id", protectRoute, deletePost);
 router.post("/comment/:id", protectRoute, commentOnPost);
 router.post("/like/:id", protectRoute, likeUnLikePost);
 router.get("/following", protectRoute, getFollowingPosts);
-router.get("/user/:username", protectRoute, getUserPost); // Assuming you want to get posts by user ID////////////////////////////
+router.get("/user/:username", protectRoute, getUserPost);
+router.get("/:postId", protectRoute, getPostById);
 
-///////////////////////////// 
+router.post("/report/post/:postId", protectRoute, reportPost);
+router.post("/report/comment/:commentId", protectRoute, reportComment);
 
-router.post("/profile/:username", protectRoute, getUserProfile);
-router.get("/suggested", protectRoute, getSuggestedUsers);  ////// not yet 
-router.post("/follow/:id", protectRoute, followUnfollowUser)
-router.post("/update", protectRoute, updateUserProfile);
+router.put("/editComment/:commentId", protectRoute, editComment);
+router.put("/editPost/:postId", protectRoute, editPost);
 
-////////////////////////////////  done . 
+/////////////////////////////////
 
 router.get('/users', protectRoute, searchUsers);
 router.get('/posts', protectRoute, searchPosts);
 
+///////////////////////
 
+router.post("/profile/:username", protectRoute, getUserProfile);
+router.get("/suggested", protectRoute, getSuggestedUsers);
+router.post("/follow/:id", protectRoute, followUnfollowUser);
+router.post("/update", protectRoute, updateUserProfile);
+router.get("/profile/:id", getUser);
+router.post("/changPassword", protectRoute, changPassword);
+
+///////////////
+
+app.use("/api/auth", authRouters);
+app.use("/api/admin", adminRouters);
+app.use("/api/users", userRouters);
+app.use("/api/posts", postRouters);
+app.use("/api/notifications", notificationRouters);
+app.use("/api/messages", messageRouters);
+app.use("/api/search", searchRouters);
+app.use("/", ggRouters);

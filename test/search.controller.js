@@ -1,5 +1,5 @@
-const Post = require("../models/post.model");
-const User = require("../models/user.model");
+import Post from "../models/post.model.js";
+import User from "../models/user.model.js";
 
 const searchUsers = async (req, res) => {
   const { userId } = req.user;
@@ -11,9 +11,7 @@ const searchUsers = async (req, res) => {
 
   try {
     const users = await User.find({
-      $or: [
-        { fullname: { $regex: search, $options: "i" } },
-      ],
+      $or: [{ fullname: { $regex: search, $options: "i" } }],
       _id: { $ne: userId },
     }).select("-password");
 
@@ -31,10 +29,10 @@ const searchPosts = async (req, res) => {
     return res.status(400).json({ message: "Search query is required" });
   }
 
-
   try {
     const posts = await Post.find({
       $or: [{ text: { $regex: search, $options: "i" } }],
+      isHidden: false,
     });
 
     res.status(200).json({ posts });
@@ -43,7 +41,5 @@ const searchPosts = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-module.exports = {
-  searchUsers,
-  searchPosts,
-};
+
+export { searchUsers, searchPosts };

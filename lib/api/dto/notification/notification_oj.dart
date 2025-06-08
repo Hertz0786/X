@@ -17,7 +17,7 @@ class NotificationModel {
     return NotificationModel(
       id: json['_id'],
       type: json['type'],
-      postId: json['post'],
+      postId: json['post'] is Map<String, dynamic> ? json['post']['_id'] : json['post'],
       read: json['read'] ?? false,
       from: FromUser.fromJson(json['from']),
     );
@@ -25,13 +25,19 @@ class NotificationModel {
 }
 
 class FromUser {
+  final String id;
   final String username;
   final String? profileImg;
 
-  FromUser({required this.username, this.profileImg});
+  FromUser({
+    required this.id,
+    required this.username,
+    this.profileImg,
+  });
 
   factory FromUser.fromJson(Map<String, dynamic> json) {
     return FromUser(
+      id: json['_id'],
       username: json['username'],
       profileImg: json['profileImg'],
     );

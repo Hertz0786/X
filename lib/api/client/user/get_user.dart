@@ -1,6 +1,7 @@
 import 'package:kotlin/api/client/api_client.dart';
 import 'package:kotlin/api/client/token_storage.dart';
 import 'package:kotlin/api/dto/auth/get_me_oj.dart';
+import 'package:kotlin/api/dto/post/create_post_oj.dart';
 
 class GetUser {
   final ApiClient apiClient;
@@ -25,4 +26,23 @@ class GetUser {
       throw Exception("Lỗi khi lấy thông tin người dùng: $e");
     }
   }
+
+  Future<CreatePostObject> fetchPostById(String postId) async {
+    final token = await TokenStorage.getToken();
+    if (token == null) throw Exception("Token không tồn tại");
+
+    try {
+      final response = await apiClient.get(
+        '/api/posts/$postId',
+        token: token,
+        fromJson: (json) => CreatePostObject.fromJson(json),
+      );
+
+      return response;
+    } catch (e) {
+      throw Exception("Lỗi khi lấy bài viết: $e");
+    }
+  }
+
+
 }

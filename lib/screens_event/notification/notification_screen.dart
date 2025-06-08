@@ -6,6 +6,7 @@ import 'package:kotlin/api/dto/auth/get_me_oj.dart';
 import 'package:kotlin/api/client/id_storage.dart';
 import 'package:kotlin/api/client/notification/notification_api.dart';
 import 'package:kotlin/api/dto/notification/notification_oj.dart';
+import 'package:kotlin/screens_event/post/post_detail_screen.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -87,11 +88,22 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   void _onNotificationTap(NotificationModel n) {
-    if (n.postId != null) {
-      // TODO: Điều hướng đến bài viết
-      print("📌 Mở bài viết: ${n.postId}");
+    if (n.type == 'follow') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ProfileScreen(userId: n.from.id)),
+      );
+    } else if (n.postId != null) {
+      print('🔍 Chuyển đến postId: ${n.postId}');
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => PostDetailScreen(postId: n.postId!)),
+      );
+    } else {
+      print('⚠️ Không có postId trong notification');
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
