@@ -1,5 +1,6 @@
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:kotlin/api/client/id_storage.dart';
+import 'dart:async';
 
 class SocketService {
   static final SocketService _instance = SocketService._internal();
@@ -11,23 +12,38 @@ class SocketService {
 
   bool get isConnected => _connected;
 
-  Future<void> connect() async {
-    if (_connected || _socket != null) return;
+  Future<bool> connect() async {
+    if (_connected || _socket != null) return true;
 
     final userId = await IdStorage.getUserId();
     if (userId == null) {
       print("❌ Không có userId để kết nối socket");
-      return;
+      return false;
     }
 
-    _socket = IO.io('http://10.0.2.2:5000', <String, dynamic>{
+    final completer = Completer<bool>();
+
+    _socket = IO.io('https://xx-m8te.onrender.com', <String, dynamic>{
       'transports': ['websocket'],
       'query': {'userId': userId},
+      'autoConnect': false,
     });
+
+    _socket!.connect();
 
     _socket!.onConnect((_) {
       _connected = true;
       print('✅ Đã kết nối Socket.IO');
+      completer.complete(true);
+    });
+
+    _socket!.onConnectError((data) {
+      print('⚠️ Lỗi kết nối socket: $data');
+      completer.complete(false);
+    });
+
+    _socket!.onError((data) {
+      print('❌ Lỗi tổng quát từ socket: $data');
     });
 
     _socket!.onDisconnect((_) {
@@ -35,13 +51,7 @@ class SocketService {
       print('❌ Socket.IO bị ngắt kết nối');
     });
 
-    _socket!.onConnectError((data) {
-      print('⚠️ Lỗi kết nối socket: $data');
-    });
-
-    _socket!.onError((data) {
-      print('❌ Lỗi tổng quát từ socket: $data');
-    });
+    return completer.future;
   }
 
   void onNewMessage(void Function(dynamic data) callback) {
@@ -51,6 +61,7 @@ class SocketService {
       print("⚠️ Socket chưa được khởi tạo để lắng nghe newMessage");
     }
   }
+
 
   void sendMessage(String receiverId, String text, {String? imageUrl}) {
     if (!_connected || _socket == null) {

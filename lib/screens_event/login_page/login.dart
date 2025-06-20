@@ -5,6 +5,7 @@ import 'package:kotlin/api/dto/auth/login_oj.dart';
 import 'package:kotlin/api/client/auth/auth_login_api.dart';
 import 'package:kotlin/api/client/token_storage.dart';
 import 'package:kotlin/api/client/id_storage.dart';
+import 'package:kotlin/api/client/Socket.dart'; // 🔌 Thêm dòng này
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -48,9 +49,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
       await TokenStorage.saveToken(token);
       await IdStorage.saveUserId(userId);
-
       print("✅ Token đã lưu: $token");
       print("🧾 ID người dùng đã lưu: $userId");
+
+      // 🔌 Kết nối socket
+      await SocketService().connect();
 
       Navigator.pushReplacement(
         context,

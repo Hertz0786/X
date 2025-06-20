@@ -15,7 +15,7 @@ const getUsersForSideBar = async (req, res) => {
             { senderId: userId },
             { receiverId: userId }
           ]
-        }
+        }0
       },
       {
         $addFields: {

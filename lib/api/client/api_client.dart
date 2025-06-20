@@ -5,7 +5,7 @@ import 'package:kotlin/api/client/id_storage.dart';  // Thêm IdStorage
 typedef FromJson<T> = T Function(dynamic json);
 
 class ApiClient {
-  final String baseUrl = "http://10.0.2.2:5000";  // URL của API server
+  final String baseUrl = "https://xx-m8te.onrender.com";  // URL của API server
 
   ApiClient();
 

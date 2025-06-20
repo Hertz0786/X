@@ -11,6 +11,7 @@ import 'package:kotlin/api/dto/post/comment_on_post_oj.dart';
 import 'package:kotlin/api/dto/post/cm_oj.dart';
 import 'package:kotlin/api/dto/auth/get_me_oj.dart';
 import 'package:kotlin/api/client/rp-ed/report_request_dto.dart';
+import 'package:kotlin/screens_event/user/profile_screen.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final CreatePostObject? post;
@@ -283,16 +284,28 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     final avatar = user?.profileImg;
 
                     return ListTile(
-                      leading: CircleAvatar(
-                        backgroundImage: avatar != null && avatar.isNotEmpty
-                            ? NetworkImage(avatar)
-                            : null,
-                        backgroundColor: avatar == null || avatar.isEmpty
-                            ? _getRandomColorExcludingBlack()
-                            : Colors.transparent,
-                        child: avatar == null || avatar.isEmpty
-                            ? Text(fullName[0].toUpperCase(), style: const TextStyle(color: Colors.white))
-                            : null,
+                      leading: GestureDetector(
+                        onTap: () {
+                          if (cmt.user != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ProfileScreen(userId: cmt.user!),
+                              ),
+                            );
+                          }
+                        },
+                        child: CircleAvatar(
+                          backgroundImage: (avatar?.isNotEmpty == true)
+                              ? NetworkImage(avatar!)
+                              : null,
+                          backgroundColor: (avatar == null || avatar.isEmpty)
+                              ? Colors.grey
+                              : Colors.transparent,
+                          child: (avatar == null || avatar.isEmpty)
+                              ? const Icon(Icons.person, color: Colors.white)
+                              : null,
+                        ),
                       ),
                       title: Text(cmt.text, style: const TextStyle(color: Colors.white)),
                       subtitle: Text("Người dùng: $fullName", style: const TextStyle(color: Colors.grey)),
@@ -304,6 +317,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         ),
                       ),
                     );
+
                   },
                 );
               },

@@ -40,7 +40,6 @@ class FirstScreen extends StatelessWidget {
                 onPressed: () {
                   // Hành động tiếp tục với Google
                   print("Tiếp tục với Google");
-                  // Bạn có thể thay thế hành động này bằng logic đăng nhập Google
                 },
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -48,30 +47,6 @@ class FirstScreen extends StatelessWidget {
                     Icon(Icons.g_mobiledata, color: Colors.red),
                     SizedBox(width: 10),
                     Text('Tiếp tục với Google',
-                        style: TextStyle(color: Colors.black)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                onPressed: () {
-                  // Hành động tiếp tục với Apple
-                  print("Tiếp tục với Apple");
-                  // Bạn có thể thay thế hành động này bằng logic đăng nhập Apple
-                },
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.apple, color: Colors.black),
-                    SizedBox(width: 10),
-                    Text('Tiếp tục với Apple',
                         style: TextStyle(color: Colors.black)),
                   ],
                 ),
@@ -97,7 +72,6 @@ class FirstScreen extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  // Chuyển sang màn hình LoginScreen
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -117,7 +91,6 @@ class FirstScreen extends StatelessWidget {
                   const SizedBox(width: 5),
                   GestureDetector(
                     onTap: () {
-                      // Chuyển sang màn hình tạo tài khoản
                       Navigator.push(
                         context,
                         MaterialPageRoute(

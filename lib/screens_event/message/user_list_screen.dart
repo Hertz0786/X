@@ -39,7 +39,7 @@ class _UserListScreenState extends State<UserListScreen> {
       if (token == null) throw Exception("Chưa đăng nhập");
 
       final res = await http.get(
-        Uri.parse("http://10.0.2.2:5000/api/messages/users"),
+        Uri.parse("https://xx-m8te.onrender.com/api/messages/users"),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

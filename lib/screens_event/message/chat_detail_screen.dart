@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:kotlin/api/client/mess/mess_api.dart';
 import 'package:kotlin/api/dto/mess/mess_oj.dart';
@@ -24,12 +25,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<MessageModel> _messages = [];
   final SocketService _socketService = SocketService();
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _loadMessages();
     _socketService.connect();
+
+    // Gọi lại _loadMessages mỗi 5 giây
+    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _loadMessages();
+    });
+
     _socketService.onNewMessage((data) {
       final msg = MessageModel.fromJson(data);
       if (msg.senderId == widget.receiverId) {
@@ -44,8 +52,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Future<void> _loadMessages() async {
     try {
       final msgs = await MessageApi().getMessagesWithUser(widget.receiverId);
-      setState(() => _messages.addAll(msgs));
-      _scrollToBottom(delay: true);
+
+      // Lọc tin nhắn mới chưa có trong danh sách hiện tại
+      final newMsgs = msgs.where((m) =>
+      !_messages.any((existing) => existing.id == m.id)).toList();
+
+      if (newMsgs.isNotEmpty) {
+        setState(() {
+          _messages.addAll(newMsgs);
+        });
+        _scrollToBottom(delay: true);
+      }
     } catch (e) {
       debugPrint("❌ Load messages error: $e");
     }
@@ -92,6 +109,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
+    _refreshTimer?.cancel(); // Huỷ timer khi rời màn hình
     super.dispose();
   }
 
